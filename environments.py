@@ -19,44 +19,46 @@ class GymCityFlow(gym.Env):
         self.flowDict = json.load(open(self.configDict['dir'] + self.configDict['flowFile']))
         # create dict of controllable intersections and number of light phases
         self.intersections = {}
-        for (_,intersection) in enumerate(self.roadnetDict['intersections']):
-            print(json.dumps(intersection, indent=4, sort_keys=True))
+        
+        for i in range(len(self.roadnetDict['intersections'])):
             # check if intersection is controllable
-            if intersection['virtual'] == False:
+            if self.roadnetDict['intersections'][i]['virtual'] == False:
                 # for each roadLink in intersection store incoming lanes, outgoing lanes and direction in lists
                 incomingLanes = []
                 outgoingLanes = []
                 directions = []
-                for (_,road_link)in enumerate(intersection['roadLinks']):
+                for j in range(len(self.roadnetDict['intersections'][i]['roadLinks'])):
                     incomingRoads = []
                     outgoingRoads = []
-                    directions.append(road_link['direction'])
-                    for (_,road_link) in enumerate(road_link['laneLinks']):
-                        print(json.dumps(road_link, indent=4, sort_keys=True))
-                        incomingRoads.append(road_link['startRoad'] + 
+                    directions.append(self.roadnetDict['intersections'][i]['roadLinks'][j]['direction'])
+                    for k in range(len(self.roadnetDict['intersections'][i]['roadLinks'][j]['laneLinks'])):
+                        incomingRoads.append(self.roadnetDict['intersections'][i]['roadLinks'][j]['startRoad'] + 
                                             '_' + 
-                                            str(road_link['startLaneIndex']))
-                        outgoingRoads.append(road_link['endRoad'] + 
+                                            str(self.roadnetDict['intersections'][i]['roadLinks'][j]['laneLinks'][k]['startLaneIndex']))
+                        outgoingRoads.append(self.roadnetDict['intersections'][i]['roadLinks'][j]['endRoad'] + 
                                             '_' + 
-                                            str(road_link['endLaneIndex']))
+                                            str(self.roadnetDict['intersections'][i]['roadLinks'][j]['laneLinks'][k]['endLaneIndex']))
                     incomingLanes.append(incomingRoads)
                     outgoingLanes.append(outgoingRoads)
+
                 # add intersection to dict where key = intersection_id
                 # value = no of lightPhases, incoming lane names, outgoing lane names, directions for each lane group
-                self.intersections[intersection['id']] = [[len(intersection['trafficLight']['lightphases'])], 
-                                                                                incomingLanes,
-                                                                                outgoingLanes,
-                                                                                directions]
+                self.intersections[self.roadnetDict['intersections'][i]['id']] = [
+                                                                                  [len(self.roadnetDict['intersections'][i]['trafficLight']['lightphases'])],
+                                                                                  incomingLanes,
+                                                                                  outgoingLanes,
+                                                                                  directions
+                                                                                 ]
 
         #setup intersectionNames list for agent actions
         self.intersectionNames = []
-        for instersection_id in self.intersections:
-            self.intersectionNames.append(instersection_id)
+        for key in self.intersections:
+            self.intersectionNames.append(key)
 
         #define action space MultiDiscrete()
         actionSpaceArray = []
-        for instersection_id in self.intersections:
-            actionSpaceArray.append(self.intersections[instersection_id][0][0])
+        for key in self.intersections:
+            actionSpaceArray.append(self.intersections[key][0][0])
         self.action_space = gym.spaces.MultiDiscrete(actionSpaceArray)
 
         # define observation space
@@ -117,7 +119,6 @@ class GymCityFlow(gym.Env):
             self.eng.set_tl_phase(self.intersectionNames[idx], action[idx])
         
         self.eng.next_step()
-        self.eng.set_tl_phase(self.intersection_id, action)
         
         self.observation = self._get_observation()
         self.reward = self._get_reward()
@@ -126,7 +127,7 @@ class GymCityFlow(gym.Env):
         if self.current_step + 1 == self.steps_per_episode:
             self.is_done = True
 
-        return self.observation, self.reward , self.has_done, {}
+        return self.observation, self.reward , self.is_done, {}
     
     def reset(self):
         """Reset Simulation to start position(from json files)"""
@@ -150,19 +151,20 @@ class GymCityFlow(gym.Env):
         return self.observation
     
     def _get_reward(self):
-        # get information from env
         self.vehicle_speeds = self.eng.get_vehicle_speed()
         self.lane_vehicles = self.eng.get_lane_vehicles()
+
         #list of waiting vehicles
         waitingVehicles = []
         reward = []
+
         #for intersection in dict retrieve names of waiting vehicles
-        for instersection in self.intersections:
-            for i in range(len(self.intersections[instersection][1])):
+        for key in self.intersections:
+            for i in range(len(self.intersections[key][1])):
                 #reward val
                 intersectionReward = 0
-                for j in range(len(self.intersections[instersection][1][i])):
-                    vehicle = self.lane_vehicles[self.intersections[instersection][1][i][j]]
+                for j in range(len(self.intersections[key][1][i])):
+                    vehicle = self.lane_vehicles[self.intersections[key][1][i][j]]
                     #if lane is empty continue
                     if len(vehicle) == 0:
                             continue
@@ -195,7 +197,7 @@ class GymCityFlow(gym.Env):
             self.waiting_vehicles_reward.pop(item)
         
         return reward
-    
+
     def render(self, mode='human'):
             print("Current time: " + self.eng.get_current_time())
 
