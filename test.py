@@ -1,5 +1,13 @@
+from CityflowEnv import CityflowEnvironment
 # Import the RL algorithm (Trainer) we would like to use.
 from ray.rllib.agents.ppo import PPOTrainer
+from ray.tune.registry import register_env
+
+
+def env_creator(env_config):
+    return CityflowEnvironment(env_config)  # return an env instance
+
+register_env("my_env", env_creator)
 
 # Configure the algorithm.
 config = {
