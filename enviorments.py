@@ -74,7 +74,7 @@ class GymCityFlow(gym.Env):
 
     def __init__(self, config):
         #steps per episode
-        self.steps_per_episode = 1_000
+        self.steps_per_episode = 100
         self.is_done = False
         self.current_step = 0
         self.intersections = [] # id => [number of actions, incomings, outgoings,directions]
@@ -126,7 +126,7 @@ class GymCityFlow(gym.Env):
         return self._get_observation()
 
     def render(self, mode='human'):
-        print("Current time: " + self.cityflow.get_current_time())
+        print(f'Current time: {self.eng.get_current_time()}')
 
     def _get_observation(self):
         info = {}
