@@ -90,7 +90,7 @@ class GymCityFlow(gym.Env):
         self.observation_space = gym.spaces.Box(np.zeros(self.observationSpaceDict.shape),self.observationSpaceDict,dtype=np.float64)       
         self.action_space = gym.spaces.MultiDiscrete(self.actionSpaceArray)
         # create cityflow engine
-        self.eng = cityflow.Engine(config_path, thread_num=5)  
+        self.eng = cityflow.Engine(config_path, thread_num=2)  
         #Waiting dict for reward function
         self.waiting_vehicles_reward = {}
 
