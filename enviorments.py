@@ -1,4 +1,6 @@
+from __future__ import division
 import json
+import math
 
 import numpy as np
 import gym
@@ -11,10 +13,23 @@ class GymCityFlow(gym.Env):
     def _preprocess(self,config_path):
         # local vars init
         intersections = {}
+        summary = {
+            'maxSpeed': 0,
+            'length': 10,
+            'minGap': 5,
+            'size': 300,
+        }
+
         # load files from config and local
         config =  json.load(open(config_path))
         roadnet = json.load(open(config['dir'] + config['roadnetFile']))
         flow = json.load(open(config['dir'] + config['flowFile']))
+        
+        # get all data from flow
+        for flow_info in flow:
+            summary['maxSpeed'] = max(summary['maxSpeed'] ,flow_info['vehicle']['maxSpeed'])
+            summary['length'] = min(summary['length'] ,flow_info['vehicle']['length'])
+            summary['minGap'] = min(summary['minGap'] ,flow_info['vehicle']['minGap'])
         # 
         for intersection in roadnet['intersections']:
             # is controlled by runing script
@@ -48,10 +63,14 @@ class GymCityFlow(gym.Env):
         for id,info in intersections.items():
             intersectionNames.append(id)
             actionSpaceArray.append(info[0])
-        counter = [ len(info[1][0]) + len(info[1][1]) for info in intersections.values()] 
-        total_col = max(counter)
-        state = np.zeros((len(intersections),total_col),dtype=np.float64) + 500
-        return intersections, state, actionSpaceArray, intersectionNames
+        counter = np.array([ np.array([info[1][0].size,info[1][1].size]) for info in intersections.values()])
+        in_lane,out_lane = np.max(counter,axis=0)
+        summary['inLanes'] = in_lane
+        summary['outLanes'] = out_lane
+        summary['division'] = math.ceil(summary['size'] /(summary['length'] + summary['minGap']))
+        # set state size
+        state = np.zeros((self.channel_num,len(intersections),(in_lane+out_lane),summary['division']),dtype=np.float64) + 255
+        return intersections, state, actionSpaceArray, intersectionNames, summary
 
     def __init__(self, config):
         #steps per episode
@@ -61,10 +80,11 @@ class GymCityFlow(gym.Env):
         self.intersections = [] # id => [number of actions, incomings, outgoings,directions]
         self.actionSpaceArray = []
         self.observationSpaceDict = []
-        config_path = 'examples/2x3/config.json'
+        self.summary = {}
+        self.channel_num = 3
+        config_path = 'examples/1x1/config.json'
         # scrape all information from json files
-        self.intersections, self.observationSpaceDict, self.actionSpaceArray,self.intersectionNames = self._preprocess(config_path)
-        print(self.observationSpaceDict)
+        self.intersections, self.observationSpaceDict, self.actionSpaceArray,self.intersectionNames, self.summary = self._preprocess(config_path)
         # create spaces
         self.state_shape = self.observationSpaceDict.shape
         self.observation_space = gym.spaces.Box(np.zeros(self.observationSpaceDict.shape),self.observationSpaceDict,dtype=np.float64)       
@@ -113,63 +133,27 @@ class GymCityFlow(gym.Env):
         info['lane_vehicle_count'] = self.eng.get_lane_vehicle_count()  # {lane_id: lane_count, ...}
         # # info['start_lane_vehicle_count'] = {lane: self.eng.get_lane_vehicle_count()[lane] for lane in self.start_lane}
         # info['lane_waiting_vehicle_count'] = self.eng.get_lane_waiting_vehicle_count()  # {lane_id: lane_waiting_count, ...}
-        # info['lane_vehicles'] = self.eng.get_lane_vehicles()  # {lane_id: [vehicle1_id, vehicle2_id, ...], ...}
-        # info['vehicle_speed'] = self.eng.get_vehicle_speed()  # {vehicle_id: vehicle_speed, ...}
-        # info['vehicle_distance'] = self.eng.get_vehicle_distance()  # {vehicle_id: distance, ...}
+        info['lane_vehicles'] = self.eng.get_lane_vehicles()  # {lane_id: [vehicle1_id, vehicle2_id, ...], ...}
+        info['vehicle_speed'] = self.eng.get_vehicle_speed()  # {vehicle_id: vehicle_speed, ...}
+        info['vehicle_distance'] = self.eng.get_vehicle_distance()  # {vehicle_id: distance, ...}
         # info['current_time'] = self.eng.get_current_time()
         state = np.zeros(self.state_shape)
-        # print(self.state_shape)
         for row,intersection in enumerate(self.intersections.values()):
             roads = np.concatenate((intersection[1][0].T,intersection[1][1].T),axis=0)
             lanes = roads.ravel()
             for col,lane in enumerate(lanes):
-                pass
-                    # print(row,col)
-                    # state[row,col] = info['lane_vehicle_count'][lane]        
-        return state
-        
-        
-        # for intersection in self.intersections.values():
-            # print(len(intersection))
-            # for incoming_lanes in intersection[1]:
-            #     print(incoming_lanes)
-            # for outgoing_lanes in intersection[2]:
-            #     print(outgoing_lanes)
-
-            
-        # info['current_phase'] = self.current_phase
-        # info['current_phase_time'] = self.current_phase_time
-        # print(info['lane_vehicle_count'])
-        return info
-        # state = np.zeros(self.state_shape)
-        # for idx,lane_id in enumerate(self.start_lane):
-        #     # get all vehicle in lane 
-        #     for v_id in info['lane_vehicles'][lane_id]:
-        #         index = int(info['vehicle_distance'][v_id]//5)
-        #         state[0][idx][index] = info['vehicle_distance'][v_id]%5
-        #         state[1][idx][index] =  info['vehicle_speed'][v_id]
-        #         # lets normlize 
-        #         state[0][idx][index] /=  self.RGB_MAX/self.MAX_DISTANCE 
-        #         state[1][idx][index] /=  self.RGB_MAX/self.MAX_SPEED
-        #observation
-        #get arrays of waiting cars on input lane vs waiting cars on output lane for each intersection
-        # self.lane_waiting_vehicles_dict = self.eng.get_lane_waiting_vehicle_count()
-        # observation_dict = {}
-        # for key in self.intersections:
-        #     waitingIntersection=[]
-        #     for i in range(len(self.intersections[key][1])):
-        #         for j in range(len(self.intersections[key][1][i])):
-        #             waitingIntersection.append(
-        #                 np.array(
-        #                 [self.lane_waiting_vehicles_dict[self.intersections[key][1][i][j]], 
-        #                 self.lane_waiting_vehicles_dict[self.intersections[key][2][i][j]]]))
-        #     observation_dict[key] = waitingIntersection
-        # tmp = []
-        # for _, values in observation_dict.items():
-        #     tmp.append(np.concatenate( values, axis=0))
-        # self.observation = np.array(tmp)
-        # return self.observation
-        # return np.array([1,2])
+                for vehicle_id in info['lane_vehicles'][lane]:
+                    leader_id = self.eng.get_leader(vehicle_id)
+                    distance = info['vehicle_distance'][vehicle_id]
+                    speed = info['vehicle_speed'][vehicle_id]
+                    division_idx = int(distance//self.summary['division'])
+                    state[0,row,col,division_idx] = speed / self.summary['maxSpeed']
+                    state[1,row,col,division_idx] = int(distance%self.summary['division']) / self.summary['division']
+                    if leader_id:
+                        leader_distance = info['vehicle_distance'][vehicle_id]
+                        # leader_speed = info['vehicle_speed'][vehicle_id]
+                        state[2,row,col,division_idx] = (leader_distance - distance) / self.summary['size']              
+        return state * 255
 
     def _get_reward(self):
         reward = []
@@ -182,7 +166,7 @@ class GymCityFlow(gym.Env):
         self.vehicle_speeds = self.eng.get_vehicle_speed()
         self.lane_vehicles = self.eng.get_lane_vehicles()
 
-         #list of waiting vehicles
+        #list of waiting vehicles
         waitingVehicles = []
         reward = []
 

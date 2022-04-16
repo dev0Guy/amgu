@@ -12,10 +12,14 @@ print("="*15)
 action  = 0
 counter = 0 
 info = env.reset()
-for i in range(1):
-    x = env.step([action,action,action,action,action,action])
-    print(x[0])
+# print(json.dumps(env.flow, indent=4, sort_keys=True))
+# print(info)
+print(env.summary)
+for i in range(51):
+    # x = env.step([action,action,action,action,action,action])
+    x = env.step([action])
     counter += 1
     if counter == 50:
+        # print(x[0])
         counter = 0
         action = (action + 1) % 4
