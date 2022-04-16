@@ -157,56 +157,10 @@ class GymCityFlow(gym.Env):
         return state * 255
 
     def _get_reward(self):
-        reward = []
-        self.vehicle_speeds = self.eng.get_vehicle_speed()
-        self.lane_vehicles = self.eng.get_lane_vehicles()
-        return -20
-
-    def _get_reward_nonExp(self):
-        reward = []
-        self.vehicle_speeds = self.eng.get_vehicle_speed()
-        self.lane_vehicles = self.eng.get_lane_vehicles()
-
-        #list of waiting vehicles
-        waitingVehicles = []
-        reward = []
-
-        #for intersection in dict retrieve names of waiting vehicles
-        for key in self.intersections:
-            for i in range(len(self.intersections[key][1])):
-                #reward val
-                intersectionReward = 0
-                for j in range(len(self.intersections[key][1][i])):
-                    vehicle = self.lane_vehicles[self.intersections[key][1][i][j]]
-                    #if lane is empty continue
-                    if len(vehicle) == 0:
-                            continue
-                    for k in range(len(vehicle)):
-                        #If vehicle is waiting check for it in dict
-                        if self.vehicle_speeds[vehicle[k]] < 0.1:
-                            waitingVehicles.append(vehicle[k])
-                            if vehicle[k] not in self.waiting_vehicles_reward:
-                                self.waiting_vehicles_reward[vehicle[k]] = 1
-                            else:
-                                self.waiting_vehicles_reward[vehicle[k]] += 1
-                            #calculate reward for intersection, cap value to -2e+200
-                            if intersectionReward > -1e+200:
-                                intersectionReward += -(self.waiting_vehicles_reward[vehicle[k]])
-                            else:
-                                intersectionReward = -1e+200
-            reward.append([key, intersectionReward])
-
-        waitingVehiclesRemove = []
-        for key in self.waiting_vehicles_reward:
-            if key in waitingVehicles:
-                continue
-            else:
-                waitingVehiclesRemove.append(key)
-
-        for item in waitingVehiclesRemove:
-            self.waiting_vehicles_reward.pop(item)
-        
-        return reward
+        dev = np.count_nonzero(self.observation[0]) / (self.observation.size// self.channel_num)
+        if dev < 0.1:
+            return 1 + (dev)/(0.1)
+        return (dev+0.1)/(0.4) 
 
     def seed(self, seed=None):
         self.eng.set_random_seed(seed)

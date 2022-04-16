@@ -19,7 +19,7 @@ for i in range(51):
     # x = env.step([action,action,action,action,action,action])
     x = env.step([action])
     counter += 1
+    print(x[1])
     if counter == 50:
-        print(x[1])
         counter = 0
         action = (action + 1) % 4
