@@ -154,13 +154,14 @@ class GymCityFlow(gym.Env):
                         leader_distance = info['vehicle_distance'][vehicle_id]
                         # leader_speed = info['vehicle_speed'][vehicle_id]
                         state[2,row,col,division_idx] = (leader_distance - distance) / self.summary['size']              
-        return state * 255
+        return state
 
     def _get_reward(self):
-        dev = np.count_nonzero(self.observation[0]) / (self.observation.size// self.channel_num)
-        if dev < 0.1:
-            return 1 + (dev)/(0.1)
-        return (dev+0.1)/(0.4) 
-
+        vehicle_num = sum(self.eng.get_lane_vehicle_count().values())
+        vehicle_spped = list(self.eng.get_vehicle_speed().values())
+        vehicle_spped = 1 - (np.array(vehicle_spped)/ self.summary['maxSpeed'])
+        d = np.array(list(map(lambda x: max(0,x), vehicle_spped)))
+        return - np.sum((vehicle_num - d)/vehicle_num)
+    
     def seed(self, seed=None):
         self.eng.set_random_seed(seed)

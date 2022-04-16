@@ -15,7 +15,7 @@ info = env.reset()
 # print(json.dumps(env.flow, indent=4, sort_keys=True))
 # print(info)
 print(env.summary)
-for i in range(51):
+for i in range(100):
     # x = env.step([action,action,action,action,action,action])
     x = env.step([action])
     counter += 1
