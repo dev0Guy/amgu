@@ -1,4 +1,5 @@
-from environments import GymCityFlow
+import json
+from enviorments import GymCityFlow
 
 gym_config = {
     'configPath': 'examples/2x3/config.json',
@@ -10,8 +11,10 @@ print("="*5 + "  Reset  " + "="*5)
 print("="*15)
 action  = 0
 counter = 0 
-for i in range(2_000):
-    env.step([action,action,action,action,action,action])
+info = env.reset()
+for i in range(1):
+    x = env.step([action,action,action,action,action,action])
+    print(x[0])
     counter += 1
     if counter == 50:
         counter = 0
