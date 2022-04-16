@@ -138,6 +138,7 @@ class GymCityFlow(gym.Env):
         info['vehicle_distance'] = self.eng.get_vehicle_distance()  # {vehicle_id: distance, ...}
         # info['current_time'] = self.eng.get_current_time()
         state = np.zeros(self.state_shape)
+        division_size = self.summary['length'] + self.summary['minGap']
         for row,intersection in enumerate(self.intersections.values()):
             roads = np.concatenate((intersection[1][0].T,intersection[1][1].T),axis=0)
             lanes = roads.ravel()
@@ -146,9 +147,9 @@ class GymCityFlow(gym.Env):
                     leader_id = self.eng.get_leader(vehicle_id)
                     distance = info['vehicle_distance'][vehicle_id]
                     speed = info['vehicle_speed'][vehicle_id]
-                    division_idx = int(distance//self.summary['division'])
+                    division_idx = int(distance//division_size)
                     state[0,row,col,division_idx] = speed / self.summary['maxSpeed']
-                    state[1,row,col,division_idx] = int(distance%self.summary['division']) / self.summary['division']
+                    state[1,row,col,division_idx] = int(distance%division_size) / division_size
                     if leader_id:
                         leader_distance = info['vehicle_distance'][vehicle_id]
                         # leader_speed = info['vehicle_speed'][vehicle_id]
