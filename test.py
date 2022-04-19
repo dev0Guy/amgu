@@ -4,7 +4,7 @@ from ray.rllib.agents import ppo
 from enviorments import SingleAgentCityFlow,MultiAgentCityFlow
 ray.init()
 
-trainer = ppo.PPOTrainer(env=MultiAgentCityFlow,config={
+trainer = ppo.PPOTrainer(env=SingleAgentCityFlow,config={
     "env_config": {
         "config_path":'examples/2x3/config.json',
         "steps_per_episode": 1_000,
@@ -12,7 +12,7 @@ trainer = ppo.PPOTrainer(env=MultiAgentCityFlow,config={
     "framework": "torch",
     "evaluation_num_workers": 1,
     "model": {
-        "fcnet_hiddens": [3, 72,40],
+        "fcnet_hiddens": [64, 64],
         "fcnet_activation": "relu",
     },
     "evaluation_config": {

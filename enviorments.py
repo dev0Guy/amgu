@@ -6,6 +6,66 @@ import cityflow
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.utils.typing import MultiAgentDict, AgentID
 
+
+class Rewards:
+    
+    @staticmethod
+    def waiting_count(eng,intersection_state,roads,summary):
+        waiting = eng.get_lane_waiting_vehicle_count()
+        sum = 0
+        for lane in roads:
+            sum += waiting[lane]
+        return -sum
+    
+    @staticmethod
+    def avg_travel_time(eng,intersection_state,roads,summary):
+        return -eng.get_average_travel_time()
+    
+    @staticmethod
+    def delay_from_opt(eng,intersection_state,roads,summary):
+        v_num = 0
+        d = np.zeros(len(roads))
+        count_dict = eng.get_lane_vehicle_count()
+        speed_dict = eng.get_vehicle_speed()
+        lane_v = eng.get_lane_vehicles()
+        for idx,lane in enumerate(roads):
+            if lane in count_dict and lane in lane_v:
+                for vehicle_id in lane_v[lane]:
+                    d[idx]+= max(0,1 -speed_dict[vehicle_id] / summary['maxSpeed'])
+                v_num += count_dict[lane]
+        return - np.sum(d) / v_num
+    
+    @staticmethod
+    def exp_delay_from_opt(eng,intersection_state,roads,summary):
+        C = 1.45
+        v_num = 0
+        val = np.zeros(len(roads))
+        count_dict = eng.get_lane_vehicle_count()
+        speed_dict = eng.get_vehicle_speed()
+        lane_v = eng.get_lane_vehicles()
+        dist_v = eng.get_vehicle_distance()
+        for idx,lane in enumerate(roads):
+            if lane in count_dict and lane in lane_v:
+                for vehicle_id in lane_v[lane]:
+                    leader = eng.get_leader(vehicle_id) 
+                    w = dist_v[vehicle_id]
+                    w -= dist_v[vehicle_id] if leader != "" else 0
+                    d = max(0,1 -speed_dict[vehicle_id] / summary['maxSpeed'])
+                    val[idx] += C ** (w*d)
+                v_num += count_dict[lane]
+        return - (np.sum(val)-1)/ v_num
+    
+    @staticmethod
+    def get(name):
+        if name ==  'waiting_count':
+            return Rewards.waiting_count
+        elif name == 'avg_travel_time':
+            return Rewards.avg_travel_time
+        elif name == 'delay_from_opt':
+            return Rewards.delay_from_opt
+        elif name == 'exp_delay_from_opt':
+            return Rewards.exp_delay_from_opt
+
 class SingleAgentCityFlow(gym.Env):
     """_summary_
 
@@ -41,7 +101,7 @@ class SingleAgentCityFlow(gym.Env):
             summary['length'] = min(summary['length'] ,flow_info['vehicle']['length'])
             summary['minGap'] = min(summary['minGap'] ,flow_info['vehicle']['minGap'])
         # 
-        for intersection in roadnet['intersections']:
+        for idx,intersection in enumerate(roadnet['intersections']):
             # is controlled by runing script
             if not intersection['virtual']:
                 # init local var
@@ -60,7 +120,6 @@ class SingleAgentCityFlow(gym.Env):
                     outgoingLanes.append(outgoingRoads)
                 incomingLanes = np.array(incomingLanes)
                 outgoingLanes = np.array(outgoingLanes)
-                
                 intersections[intersection['id']] = [
                                                             len(intersection['trafficLight']['lightphases']),
                                                             (incomingLanes,outgoingLanes),
@@ -73,38 +132,41 @@ class SingleAgentCityFlow(gym.Env):
         for id,info in intersections.items():
             intersectionNames.append(id)
             actionSpaceArray.append(info[0])
+        for inter_id,inter_info  in intersections.items():
+            incomingLanes,outgoingLanes = inter_info[1]
+            self.road_mapper[inter_id] = np.concatenate((incomingLanes,outgoingLanes),axis=0).flatten()
         counter = np.array([ np.array([info[1][0].size,info[1][1].size]) for info in intersections.values()])
         in_lane,out_lane = np.max(counter,axis=0)
         summary['inLanes'] = in_lane
         summary['outLanes'] = out_lane
-        summary['division'] = math.ceil(summary['size'] /(summary['length'] + summary['minGap']))
+        summary['division'] = math.ceil(summary['size']/(summary['length'] + summary['minGap']))
         # set state size
-        state = np.zeros((self.channel_num,len(intersections),(in_lane+out_lane),summary['division']),dtype=np.float64) + 255
-        return intersections, state, actionSpaceArray, intersectionNames, summary
+        self.state_shape = (len(intersections),self.channel_num,(in_lane+out_lane),summary['division'])
+        return intersections, actionSpaceArray, intersectionNames, summary
 
     def __init__(self, config):
         config = config or {}
         #steps per episode
         self.steps_per_episode = config.get('steps_per_episode',500)
         config_path = config.get('config_path','examples/1x1/config.json')
+        self.reward_func = config.get('reward_func','waiting_count')
+        self.reward_func = Rewards.get(self.reward_func)
         self.is_done = False
         self.current_step = 0
         self.intersections = [] # id => [number of actions, incomings, outgoings,directions]
         self.actionSpaceArray = []
-        self.observationSpaceDict = []
         self.summary = {}
+        self.road_mapper = {}
         self.channel_num = 3
         # scrape all information from json files
-        self.intersections, self.observationSpaceDict, self.actionSpaceArray,self.intersectionNames, self.summary = self._preprocess(config_path)
+        self.intersections, self.actionSpaceArray,self.intersectionNames, self.summary = self._preprocess(config_path)
         # create spaces
-        self.state_shape = self.observationSpaceDict.shape
-        self.observation_space = gym.spaces.Box(np.zeros(self.observationSpaceDict.shape),self.observationSpaceDict,dtype=np.float64)       
+        self.state_shape = self.state_shape
+        self.observation_space = gym.spaces.Box(np.zeros(self.state_shape),np.zeros(self.state_shape)+255,dtype=np.float64)  
         self.action_space = gym.spaces.MultiDiscrete(self.actionSpaceArray)
         # create cityflow engine
         self.eng = cityflow.Engine(config_path, thread_num=2)  
-        #Waiting dict for reward function
-        self.waiting_vehicles_reward = {}
-        self.reset()
+        self.observation = self.reset()
 
     def step(self, action):
         #Check that input action size is equal to number of intersections
@@ -160,25 +222,21 @@ class SingleAgentCityFlow(gym.Env):
                     distance = info['vehicle_distance'][vehicle_id]
                     speed = info['vehicle_speed'][vehicle_id]
                     division_idx = int(distance//division_size)
-                    state[0,row,col,division_idx] = speed / self.summary['maxSpeed']
-                    state[1,row,col,division_idx] = int(distance%division_size) / division_size
+                    state[row,0,col,division_idx] = speed / self.summary['maxSpeed']
+                    state[row,1,col,division_idx] = int(distance%division_size) / division_size
                     if leader_id:
                         leader_distance = info['vehicle_distance'][vehicle_id]
-                        # leader_speed = info['vehicle_speed'][vehicle_id]
-                        state[2,row,col,division_idx] = (leader_distance - distance) / self.summary['size']              
+                        state[row,2,col,division_idx] = (leader_distance - distance) / self.summary['size']              
         return state
 
     def _get_reward(self):
-        vehicle_num = sum(self.eng.get_lane_vehicle_count().values())
-        vehicle_spped = list(self.eng.get_vehicle_speed().values())
-        vehicle_spped = 1 - (np.array(vehicle_spped)/ self.summary['maxSpeed'])
-        d = np.array(list(map(lambda x: max(0,x), vehicle_spped)))
-        return - np.sum(d/vehicle_num)
+        reward = 0
+        for idx,name in enumerate(self.intersectionNames):
+            reward += self.reward_func(self.eng,self.observation[idx],self.road_mapper[name],self.summary)
+        return reward
     
     def seed(self, seed=None):
         self.eng.set_random_seed(seed)
-
-
 
 class MultiAgentCityFlow(MultiAgentEnv):
     """_summary_
@@ -245,6 +303,9 @@ class MultiAgentCityFlow(MultiAgentEnv):
         for id,info in intersections.items():
             intersectionNames.append(id)
             actionSpaceArray.append(info[0])
+        for inter_id,inter_info  in intersections.items():
+            incomingLanes,outgoingLanes = inter_info[1]
+            self.road_mapper[inter_id] = np.concatenate((incomingLanes,outgoingLanes),axis=0).flatten()
         counter = np.array([ np.array([info[1][0].size,info[1][1].size]) for info in intersections.values()])
         in_lane,out_lane = np.max(counter,axis=0)
         summary['inLanes'] = in_lane
@@ -259,10 +320,13 @@ class MultiAgentCityFlow(MultiAgentEnv):
         #steps per episode
         self.steps_per_episode = config.get('steps_per_episode',500)
         config_path = config.get('config_path','examples/1x1/config.json')
+        self.reward_func = config.get('reward_func','waiting_count')
+        self.reward_func = Rewards.get(self.reward_func)
         self.is_done = False
         self.current_step = 0
         self.intersections = [] # id => [number of actions, incomings, outgoings,directions]
         self.actionSpaceArray = []
+        self.road_mapper = {}
         self.summary = {}
         self.channel_num = 3
         # scrape all information from json files
@@ -346,12 +410,7 @@ class MultiAgentCityFlow(MultiAgentEnv):
         return state_dict
 
     def _get_rewards(self):
-        # vehicle_num = sum(self.eng.get_lane_vehicle_count().values())
-        # vehicle_spped = list(self.eng.get_vehicle_speed().values())
-        # vehicle_spped = 1 - (np.array(vehicle_spped)/ self.summary['maxSpeed'])
-        # d = np.array(list(map(lambda x: max(0,x), vehicle_spped)))
-        # return - np.sum(d/vehicle_num)
-        return {-1 for agent_id in self._agent_ids}
+        return {agent_id:self.reward_func(self.eng,self.observations[agent_id],self.road_mapper[self.intersectionNames[idx]],self.summary)  for idx, agent_id in enumerate(self._agent_ids)}
     
     def seed(self, seed=None):
         self.eng.set_random_seed(seed)
