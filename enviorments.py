@@ -1,6 +1,7 @@
 import json
 import math
 import os
+from typing import Tuple
 import numpy as np
 import gym
 import cityflow
@@ -112,6 +113,7 @@ class SingleAgentCityFlow(gym.Env):
         self.state_shape = self.state_shape
         self.observation_space = gym.spaces.Box(np.zeros(self.state_shape),np.zeros(self.state_shape)+255,dtype=np.float64)  
         self.action_space = gym.spaces.MultiDiscrete(self.actionSpaceArray)
+        
         # create cityflow engine
         self.observation = self.reset()
 
