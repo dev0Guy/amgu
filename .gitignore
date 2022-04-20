@@ -1,3 +1,6 @@
 .history/*
 CityFlow/.
-__pycache__/.
+__pycache__/
+*.py[cod]
+
+city_v1/*
