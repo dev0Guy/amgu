@@ -1,70 +1,12 @@
 import json
 import math
+import os
 import numpy as np
 import gym
 import cityflow
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.utils.typing import MultiAgentDict, AgentID
-
-
-class Rewards:
-    
-    @staticmethod
-    def waiting_count(eng,intersection_state,roads,summary):
-        waiting = eng.get_lane_waiting_vehicle_count()
-        sum = 0
-        for lane in roads:
-            sum += waiting[lane]
-        return -sum
-    
-    @staticmethod
-    def avg_travel_time(eng,intersection_state,roads,summary):
-        return -eng.get_average_travel_time()
-    
-    @staticmethod
-    def delay_from_opt(eng,intersection_state,roads,summary):
-        v_num = 0
-        d = np.zeros(len(roads))
-        count_dict = eng.get_lane_vehicle_count()
-        speed_dict = eng.get_vehicle_speed()
-        lane_v = eng.get_lane_vehicles()
-        for idx,lane in enumerate(roads):
-            if lane in count_dict and lane in lane_v:
-                for vehicle_id in lane_v[lane]:
-                    d[idx]+= max(0,1 -speed_dict[vehicle_id] / summary['maxSpeed'])
-                v_num += count_dict[lane]
-        return - np.sum(d) / v_num
-    
-    @staticmethod
-    def exp_delay_from_opt(eng,intersection_state,roads,summary):
-        C = 1.45
-        v_num = 0
-        val = np.zeros(len(roads))
-        count_dict = eng.get_lane_vehicle_count()
-        speed_dict = eng.get_vehicle_speed()
-        lane_v = eng.get_lane_vehicles()
-        dist_v = eng.get_vehicle_distance()
-        for idx,lane in enumerate(roads):
-            if lane in count_dict and lane in lane_v:
-                for vehicle_id in lane_v[lane]:
-                    leader = eng.get_leader(vehicle_id) 
-                    w = dist_v[vehicle_id]
-                    w -= dist_v[vehicle_id] if leader != "" else 0
-                    d = max(0,1 -speed_dict[vehicle_id] / summary['maxSpeed'])
-                    val[idx] += C ** (w*d)
-                v_num += count_dict[lane]
-        return - (np.sum(val)-1)/ v_num
-    
-    @staticmethod
-    def get(name):
-        if name ==  'waiting_count':
-            return Rewards.waiting_count
-        elif name == 'avg_travel_time':
-            return Rewards.avg_travel_time
-        elif name == 'delay_from_opt':
-            return Rewards.delay_from_opt
-        elif name == 'exp_delay_from_opt':
-            return Rewards.exp_delay_from_opt
+from utils import Rewards
 
 class SingleAgentCityFlow(gym.Env):
     """_summary_
@@ -91,10 +33,15 @@ class SingleAgentCityFlow(gym.Env):
         }
 
         # load files from config and local
+        script_dir = os.path.dirname(__file__)
+        config_path = os.path.join(script_dir,config_path)
         config =  json.load(open(config_path))
-        roadnet = json.load(open(config['dir'] + config['roadnetFile']))
-        flow = json.load(open(config['dir'] + config['flowFile']))
-        
+        roadnet_path =  os.path.join(config['dir'],config['roadnetFile'])
+        flow_path =  os.path.join(config['dir'],config['flowFile'])
+        roadnet = json.load(open(roadnet_path))
+        flow = json.load(open(flow_path))
+        self.eng = cityflow.Engine(config_path, thread_num=2)  
+
         # get all data from flow
         for flow_info in flow:
             summary['maxSpeed'] = max(summary['maxSpeed'] ,flow_info['vehicle']['maxSpeed'])
@@ -140,6 +87,7 @@ class SingleAgentCityFlow(gym.Env):
         summary['inLanes'] = in_lane
         summary['outLanes'] = out_lane
         summary['division'] = math.ceil(summary['size']/(summary['length'] + summary['minGap']))
+        
         # set state size
         self.state_shape = (len(intersections),self.channel_num,(in_lane+out_lane),summary['division'])
         return intersections, actionSpaceArray, intersectionNames, summary
@@ -165,7 +113,6 @@ class SingleAgentCityFlow(gym.Env):
         self.observation_space = gym.spaces.Box(np.zeros(self.state_shape),np.zeros(self.state_shape)+255,dtype=np.float64)  
         self.action_space = gym.spaces.MultiDiscrete(self.actionSpaceArray)
         # create cityflow engine
-        self.eng = cityflow.Engine(config_path, thread_num=2)  
         self.observation = self.reset()
 
     def step(self, action):
@@ -211,6 +158,7 @@ class SingleAgentCityFlow(gym.Env):
         info['vehicle_speed'] = self.eng.get_vehicle_speed()  # {vehicle_id: vehicle_speed, ...}
         info['vehicle_distance'] = self.eng.get_vehicle_distance()  # {vehicle_id: distance, ...}
         # info['current_time'] = self.eng.get_current_time()
+        
         state = np.zeros(self.state_shape)
         division_size = self.summary['length'] + self.summary['minGap']
         for row,intersection in enumerate(self.intersections.values()):
