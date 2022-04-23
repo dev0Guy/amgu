@@ -162,8 +162,16 @@ class ModelConfig:
         "_disable_preprocessor_api": False,
         "fcnet_hiddens": [256, 256],
         "fcnet_activation": "relu",
-        "post_fcnet_hiddens": [],
     }
+    
+    CNN = {
+        "_use_default_native_models": False,
+        "_disable_preprocessor_api": True,
+        "_disable_action_flattening": False,
+        "conv_filters": [20,1,2],
+        "conv_activation": "relu",
+    }
+    
     
     
     MODEL_DEFAULTS = {

@@ -1,6 +1,6 @@
 import json
 from ray import tune
-from enviorments import SingleAgentCityFlow
+from enviorments import SingleAgentCityFlow,AgentCityFlowWitingLanes
 from utils import AlgorithemsConfig,ModelConfig
 from ray.tune.registry import register_env
 import ray.rllib.agents.ppo as ppo
@@ -19,6 +19,7 @@ AGENT_MAPPER = {
     }
 MODEL_MAPPER = {
     "FCN": ModelConfig.FCN,
+    "CNN": ModelConfig.CNN,
     }
 # =============== CLI ARGS ===============
 parser = argparse.ArgumentParser()
@@ -37,29 +38,31 @@ parser.add_argument("--algorithm", choices=["A3C", "PPO"],default="PPO", help="C
 parser.add_argument("--result-path", type=str ,default="res/", help="Choose Path To Save Result.")
 parser.add_argument("--max-timesteps", type=int ,default=10_000, help="Stop After max-timesteps Iterations.")
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
-parser.add_argument("--model", choices=["FCN"],default="FCN", help="Choose Model For Algorithm To Run.")
+parser.add_argument("--model", choices=["FCN","CNN"],default="FCN", help="Choose Model For Algorithm To Run.")
 # =============== Script ===============
 args = parser.parse_args()
 register_env("CityFlows", lambda config: SingleAgentCityFlow(config))
+register_env("CityFlows-waiting", lambda config: AgentCityFlowWitingLanes(config))
 config = ALGORITHM_MAPPER[args.algorithm]
-config["env"]="CityFlows"
+config["env"] = "CityFlows-waiting"
 config["seed"] = args.seed
 config["framework"] = args.framework
 config["evaluation_interval" ]= args.evaluation_interval
 config["evaluation_num_episodes"] = args.evaluation_episodes
-config["env_config"]={
+config["env_config"] = {
         "config_path": args.config_path,
         "steps_per_episode": args.steps_per_episode,
         "reward_func": args.reward_function,
     }
-config["model"]= MODEL_MAPPER[args.model]
-# PRINT INFORMATION TO USER
+config["model"] = MODEL_MAPPER[args.model]
+# =============== Print In CLI ===============
 print("="*15," RUNNING WITH THE FOLLOWING CONFIG ","="*15)
 print(json.dumps(config, indent=2, sort_keys=True))
 print("With Actor:",args.algorithm)
 print("With Model:",args.model)
+print("With ENV:",config["env"])
 print("="*65)
-# DECIDE ON EVALUATION/TRAIN
+# =============== Train | Evaluation ===============
 if args.evaluation:
     agent = AGENT_MAPPER[args.algorithm](config=config)
     agent.restore(args.load_from)

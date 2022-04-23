@@ -3,3 +3,4 @@ CityFlow/.
 __pycache__/
 *.py[cod]
 res/*
+test.py

@@ -9,6 +9,166 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.utils.typing import MultiAgentDict, AgentID
 from utils import Rewards
 
+
+class AgentCityFlowWitingLanes(gym.Env):
+    """_summary_
+
+    Args:
+        gym (_type_): _description_
+
+    Raises:
+        Warning: _description_
+
+    Returns:
+        _type_: _description_
+    """
+    metadata = {'render.modes': ['human']}
+    
+    def _preprocess(self,config_path):
+        # local vars init
+        intersections = {}
+        summary = {
+            'maxSpeed': 0,
+            'length': 10,
+            'minGap': 5,
+            'size': 300,
+        }
+        # load files from config and local
+        script_dir = os.path.dirname(__file__)
+        config_path = os.path.join(script_dir,config_path)
+        config =  json.load(open(config_path))
+        roadnet_path =  os.path.join(config['dir'],config['roadnetFile'])
+        flow_path =  os.path.join(config['dir'],config['flowFile'])
+        roadnet = json.load(open(roadnet_path))
+        flow = json.load(open(flow_path))
+        self.eng = cityflow.Engine(config_path, thread_num=2)  
+        # get all data from flow
+        for flow_info in flow:
+            summary['maxSpeed'] = max(summary['maxSpeed'] ,flow_info['vehicle']['maxSpeed'])
+            summary['length'] = min(summary['length'] ,flow_info['vehicle']['length'])
+            summary['minGap'] = min(summary['minGap'] ,flow_info['vehicle']['minGap'])
+        # 
+        for idx,intersection in enumerate(roadnet['intersections']):
+            # is controlled by runing script
+            if not intersection['virtual']:
+                # init local var
+                incomingLanes = []
+                outgoingLanes = []
+                directions = []
+                for road_link in intersection['roadLinks']:
+                    incomingRoads = []
+                    outgoingRoads = []
+                    # 
+                    directions.append(road_link['direction'])
+                    for lane_link in road_link['laneLinks']:
+                        incomingRoads.append(road_link['startRoad'] + '_' + str(lane_link['startLaneIndex']))
+                        outgoingRoads.append(road_link['endRoad'] + '_' + str(lane_link['endLaneIndex']))
+                    incomingLanes.append(incomingRoads)
+                    outgoingLanes.append(outgoingRoads)
+                incomingLanes = np.array(incomingLanes)
+                outgoingLanes = np.array(outgoingLanes)
+                intersections[intersection['id']] = [
+                                                            len(intersection['trafficLight']['lightphases']),
+                                                            (incomingLanes,outgoingLanes),
+                                                            directions
+                                                        ]
+        
+        #setup intersectionNames list for agent actions
+        intersectionNames = []
+        actionSpaceArray = []
+        for id,info in intersections.items():
+            intersectionNames.append(id)
+            actionSpaceArray.append(info[0])
+        for inter_id,inter_info  in intersections.items():
+            incomingLanes,outgoingLanes = inter_info[1]
+            self.road_mapper[inter_id] = np.concatenate((incomingLanes,outgoingLanes),axis=0).flatten()
+        counter = np.array([ np.array([info[1][0].size,info[1][1].size]) for info in intersections.values()])
+        in_lane,out_lane = np.max(counter,axis=0)
+        summary['inLanes'] = in_lane
+        summary['outLanes'] = out_lane
+        summary['division'] = math.ceil(summary['size']/(summary['length'] + summary['minGap']))
+        # set state size
+        self.state_shape = (len(intersections),(in_lane+out_lane))
+        return intersections, actionSpaceArray, intersectionNames, summary
+
+    def __init__(self, config):
+        config = config or {}
+        #steps per episode
+        self.steps_per_episode = config.get('steps_per_episode',500)
+        config_path = config.get('config_path','examples/1x1/config.json')
+        self.reward_func = config.get('reward_func','waiting_count')
+        self.reward_func = Rewards.get(self.reward_func)
+        self.is_done = False
+        self.current_step = 0
+        self.intersections = [] # id => [number of actions, incomings, outgoings,directions]
+        self.actionSpaceArray = []
+        self.summary = {}
+        self.road_mapper = {}
+        self.channel_num = 1
+        # scrape all information from json files
+        self.intersections, self.actionSpaceArray,self.intersectionNames, self.summary = self._preprocess(config_path)
+        # create spaces
+        self.state_shape = self.state_shape
+        self.observation_space = gym.spaces.Box(np.zeros(self.state_shape),np.zeros(self.state_shape)+255,dtype=np.float64)  
+        self.action_space = gym.spaces.MultiDiscrete(self.actionSpaceArray)
+        
+        # create cityflow engine
+        self.observation = self.reset()
+
+    def step(self, action):
+        #Check that input action size is equal to number of intersections
+        if len(action) != len(self.intersectionNames):
+            raise Warning('Action length not equal to number of intersections')
+
+        #Set each trafficlight phase to specified action
+        for i in range(len(self.intersectionNames)):
+            self.eng.set_tl_phase(self.intersectionNames[i], action[i])
+
+        #env step
+        self.eng.next_step()
+        #observation
+        self.observation = self._get_observation()
+
+        #reward
+        self.reward = self._get_reward()
+        #Detect if Simulation is finshed for done variable
+        self.current_step += 1
+
+        if self.current_step + 1 == self.steps_per_episode:
+            self.is_done = True
+
+        #return observation, reward, done, info
+        return self.observation, self.reward, self.is_done, {}
+
+    def reset(self):
+        self.eng.reset(seed=False)
+        self.is_done = False
+        self.current_step = 0
+        return self._get_observation()
+
+    def render(self, mode='human'):
+        print(f'Current time: {self.eng.get_current_time()}')
+
+    def _get_observation(self):
+        info = {}
+        info['lane_waiting_vehicle_count'] = self.eng.get_lane_waiting_vehicle_count()  # {lane_id: lane_waiting_count, ...}     
+        state = np.zeros(self.state_shape)
+        for row,intersection in enumerate(self.intersections.values()):
+            roads = np.concatenate((intersection[1][0].T,intersection[1][1].T),axis=0)
+            lanes = roads.ravel()
+            for col,lane in enumerate(lanes):
+                state[row,col] = info['lane_waiting_vehicle_count'][lane] / self.summary['division']      
+        return state
+
+    def _get_reward(self):
+        reward = 0
+        for idx,name in enumerate(self.intersectionNames):
+            reward += self.reward_func(self.eng,self.observation[idx],self.road_mapper[name],self.summary)
+        return reward
+    
+    def seed(self, seed=None):
+        self.eng.set_random_seed(seed)
+
 class SingleAgentCityFlow(gym.Env):
     """_summary_
 
