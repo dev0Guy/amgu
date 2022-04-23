@@ -24,7 +24,7 @@ class Rewards:
         for idx,lane in enumerate(roads):
             if lane in count_dict and lane in lane_v:
                 for vehicle_id in lane_v[lane]:
-                    d[idx]+= max(0,1 - speed_dict[vehicle_id] / summary['maxSpeed'])
+                    d[idx]+= max(0,1 -speed_dict[vehicle_id] / summary['maxSpeed'])
                 v_num += count_dict[lane]
         return np.sum(d) / v_num
     
@@ -237,46 +237,7 @@ class AlgorithemsConfig:
         # continuous action spaces (not recommended, for debugging only).
         "_use_beta_distribution": False,
     }
-  
     
-    A3C = {
-        # Should use a critic as a baseline (otherwise don't use value baseline;
-        # required for using GAE).
-        "use_critic": True,
-        # If true, use the Generalized Advantage Estimator (GAE)
-        # with a value function, see https://arxiv.org/pdf/1506.02438.pdf.
-        "use_gae": True,
-        # Size of rollout batch
-        "rollout_fragment_length": 10,
-        # GAE(gamma) parameter
-        "lambda": 1.0,
-        # Max global norm for each gradient calculated by worker
-        "grad_clip": 40.0,
-        # Learning rate
-        "lr": 0.0001,
-        # Learning rate schedule
-        "lr_schedule": None,
-        # Value Function Loss coefficient
-        "vf_loss_coeff": 0.5,
-        # Entropy coefficient
-        "entropy_coeff": 0.01,
-        # Entropy coefficient schedule
-        "entropy_coeff_schedule": None,
-        # Min time (in seconds) per reporting.
-        # This causes not every call to `training_iteration` to be reported,
-        # but to wait until n seconds have passed and then to summarize the
-        # thus far collected results.
-        "min_time_s_per_reporting": 5,
-        # Workers sample async. Note that this increases the effective
-        # rollout_fragment_length by up to 5x due to async buffering of batches.
-        "sample_async": True,
-        # Use the Trainer's `training_iteration` function instead of `execution_plan`.
-        # Fixes a severe performance problem with A3C. Setting this to True leads to a
-        # speedup of up to 3x for a large number of workers and heavier
-        # gradient computations (e.g. ray/rllib/tuned_examples/a3c/pong-a3c.yaml)).
-        "_disable_execution_plan_api": True,
-    }
-        
     
 class ModelConfig:
     MODEL_DEFAULTS = {
