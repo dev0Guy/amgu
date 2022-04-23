@@ -17,6 +17,9 @@ AGENT_MAPPER = {
     "A3C": a3c.A3CTrainer,
     "PPO": ppo.PPOTrainer,
     }
+MODEL_MAPPER = {
+    "FCN": ModelConfig.FCN,
+    }
 # =============== CLI ARGS ===============
 parser = argparse.ArgumentParser()
 parser.add_argument('--evaluation', action='store_true')
@@ -34,6 +37,7 @@ parser.add_argument("--algorithm", choices=["A3C", "PPO"],default="PPO", help="C
 parser.add_argument("--result-path", type=str ,default="res/", help="Choose Path To Save Result.")
 parser.add_argument("--max-timesteps", type=int ,default=10_000, help="Stop After max-timesteps Iterations.")
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
+parser.add_argument("--model", choices=["FCN"],default="FCN", help="Choose Model For Algorithm To Run.")
 # =============== Script ===============
 args = parser.parse_args()
 register_env("CityFlows", lambda config: SingleAgentCityFlow(config))
@@ -48,10 +52,12 @@ config["env_config"]={
         "steps_per_episode": args.steps_per_episode,
         "reward_func": args.reward_function,
     }
+config["model"]= MODEL_MAPPER[args.model]
 # PRINT INFORMATION TO USER
 print("="*15," RUNNING WITH THE FOLLOWING CONFIG ","="*15)
 print(json.dumps(config, indent=2, sort_keys=True))
 print("With Actor:",args.algorithm)
+print("With Model:",args.model)
 print("="*65)
 # DECIDE ON EVALUATION/TRAIN
 if args.evaluation:
