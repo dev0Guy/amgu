@@ -212,7 +212,7 @@ class SingleAgentCityFlow(gym.Env,_BaseCityFlow):
     def _get_reward(self):
         reward = 0
         for idx,name in enumerate(self.intersectionNames):
-            reward += self.reward_func(self.eng,self.observation[idx],self.road_mapper[name],self.summary)
+            reward += self.reward_func(self.eng,self.observation[:,idx],self.road_mapper[name],self.summary)
         return reward
     
     def seed(self, seed=None):
@@ -223,8 +223,9 @@ class MultiAgentCityFlow(MultiAgentEnv,_BaseCityFlow):
 
     metadata = {'render.modes': ['human']}
     
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, config: dict):
+        MultiAgentEnv.__init__(self)
+        _BaseCityFlow.__init__(self,config)
         # create agents ids
         self._agent_ids = [f'agent_{index}' for index in range(len(self.intersections))]
         # create spaces
@@ -246,7 +247,7 @@ class MultiAgentCityFlow(MultiAgentEnv,_BaseCityFlow):
     def render(self, mode='human'):
         self._render(mode)
 
-    def _get_observations(self):
+    def _get_observation(self):
         info = {}
         info['lane_vehicle_count'] = self.eng.get_lane_vehicle_count()  # {lane_id: lane_count, ...}
         # # info['start_lane_vehicle_count'] = {lane: self.eng.get_lane_vehicle_count()[lane] for lane in self.start_lane}
@@ -275,7 +276,7 @@ class MultiAgentCityFlow(MultiAgentEnv,_BaseCityFlow):
                         state[2,col,division_idx] = (leader_distance - distance) / self.summary['size']              
         return state_dict
 
-    def _get_rewards(self):
+    def _get_reward(self):
         return {agent_id:self.reward_func(self.eng,self.observations[agent_id],self.road_mapper[self.intersectionNames[idx]],self.summary)  for idx, agent_id in enumerate(self._agent_ids)}
     
     def seed(self, seed=None):
