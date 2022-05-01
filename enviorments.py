@@ -250,7 +250,7 @@ class SingleAgentCityFlow(gym.Env):
         summary['division'] = math.ceil(summary['size']/(summary['length'] + summary['minGap']))
         
         # set state size
-        self.state_shape = (len(intersections),self.channel_num,(in_lane+out_lane),summary['division'])
+        self.state_shape = (self.channel_num,len(intersections)*(in_lane+out_lane),summary['division'])
         return intersections, actionSpaceArray, intersectionNames, summary
 
     def __init__(self, config):
@@ -320,7 +320,8 @@ class SingleAgentCityFlow(gym.Env):
         info['vehicle_speed'] = self.eng.get_vehicle_speed()  # {vehicle_id: vehicle_speed, ...}
         info['vehicle_distance'] = self.eng.get_vehicle_distance()  # {vehicle_id: distance, ...}
         # info['current_time'] = self.eng.get_current_time()
-        
+        (self.channel_num,len(intersections)*(in_lane+out_lane),summary['division'])
+
         state = np.zeros(self.state_shape)
         division_size = self.summary['length'] + self.summary['minGap']
         for row,intersection in enumerate(self.intersections.values()):
@@ -332,11 +333,11 @@ class SingleAgentCityFlow(gym.Env):
                     distance = info['vehicle_distance'][vehicle_id]
                     speed = info['vehicle_speed'][vehicle_id]
                     division_idx = int(distance//division_size)
-                    state[row,0,col,division_idx] = speed / self.summary['maxSpeed']
-                    state[row,1,col,division_idx] = int(distance%division_size) / division_size
+                    state[0,row*col,division_idx] = speed / self.summary['maxSpeed']
+                    state[1,row*col,division_idx] = int(distance%division_size) / division_size
                     if leader_id:
                         leader_distance = info['vehicle_distance'][vehicle_id]
-                        state[row,2,col,division_idx] = (leader_distance - distance) / self.summary['size']              
+                        state[2,row*col,division_idx] = (leader_distance - distance) / self.summary['size']              
         return state
 
     def _get_reward(self):

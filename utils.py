@@ -160,16 +160,28 @@ class ModelConfig:
     FCN = {
         "_use_default_native_models": False,
         "_disable_preprocessor_api": False,
-        "fcnet_hiddens": [256, 256],
+        "_disable_action_flattening": False,
+        "fcnet_hiddens": [255,255,255],
         "fcnet_activation": "relu",
     }
     
     CNN = {
+        "custom_model": None,
+        "custom_model_config": {},
         "_use_default_native_models": False,
         "_disable_preprocessor_api": True,
         "_disable_action_flattening": False,
-        "conv_filters": [20,1,2],
+        "conv_filters": None,
         "conv_activation": "relu",
+    }
+    
+    LSTM = {
+        "use_lstm": True,
+        "max_seq_len": 20,
+        "lstm_cell_size": 256,
+        "lstm_use_prev_action": True,
+        "lstm_use_prev_reward": True,
+        "_time_major": False,
     }
     
     
@@ -307,4 +319,3 @@ class ModelConfig:
         # your environment instead to preprocess observations.
         "custom_preprocessor": None,
     }
-    
