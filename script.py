@@ -1,14 +1,15 @@
 import json
 from ray import tune
-from enviorments import SingleAgentCityFlow
-from utils import AlgorithemsConfig,ModelConfig
+from enviorments import SingleAgentCityFlow,MultiAgentCityFlow
+from utils import AlgorithemsConfig
 from ray.tune.registry import register_env
 import ray.rllib.agents.ppo as ppo
 import ray.rllib.agents.a3c as a3c
 import argparse
-from attacks import Attacks
+# from attacks import Attacks
 import torch
-
+from ray.rllib.models import ModelCatalog
+import models
 # =============== CONST ===============
 ALGORITHM_MAPPER = {
     "A3C": AlgorithemsConfig.A3C,
@@ -18,13 +19,16 @@ AGENT_MAPPER = {
     "A3C": a3c.A3CTrainer,
     "PPO": ppo.PPOTrainer,
     }
-MODEL_MAPPER = {
-    "FCN": ModelConfig.FCN,
-    }
+
+# MODEL_MAPPER = {
+#     "FCN": ModelConfig.FCN,
+# }
 # =============== CLI ARGS ===============
 parser = argparse.ArgumentParser()
+parser.add_argument('--evaluation', action='store_true', help="Evaluation run")
+parser.add_argument("--multi-agent",action='store_true', help="Single Or Multi agent config")
 parser.set_defaults(evaluation=False)
-parser.add_argument('--evaluation', action='store_true')
+parser.set_defaults(multi_agent=False)
 # share arguments
 parser.add_argument("--seed", type=int, default=123, help="RLLIB Seed.")
 parser.add_argument("--framework", choices=["tf", "tf2", "tfe", "torch"], default="torch", help="Choose NN Framework.")
@@ -39,12 +43,17 @@ parser.add_argument("--result-path", type=str ,default="res/", help="Choose Path
 parser.add_argument("--max-timesteps", type=int ,default=10_000, help="Stop After max-timesteps Iterations.")
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
 parser.add_argument("--model", choices=["FCN"],default="FCN", help="Choose Model For Algorithm To Run.")
-# =============== Script ===============
 args = parser.parse_args()
-
-register_env("CityFlows", lambda config: SingleAgentCityFlow(config))
+# =============== Register To RLlib ===============
+# tegister envs
+register_env("Single-CityFlow", lambda config: SingleAgentCityFlow(config))
+register_env("Multi-CityFlow", lambda config: MultiAgentCityFlow(config))
+# register model
+ModelCatalog.register_custom_model("CNN", models.CNN)
+ModelCatalog.register_custom_model("FCN", models.FCN)
+# =============== CONFIG ===============
 config = ALGORITHM_MAPPER[args.algorithm]
-config["env"]="CityFlows"
+config["env"] = "Multi-CityFlow" if args.multi_agent else "Single-CityFlow"
 config["seed"] = args.seed
 config["framework"] = args.framework
 config["evaluation_interval" ]= args.evaluation_interval
@@ -54,8 +63,9 @@ config["env_config"]={
         "steps_per_episode": args.steps_per_episode,
         "reward_func": args.reward_function,
     }
-config["model"]= MODEL_MAPPER[args.model]
-
+config["model"] = {
+            "custom_model": args.model,
+        }
 # PRINT INFORMATION TO USER
 print("="*15," RUNNING WITH THE FOLLOWING CONFIG ","="*15)
 print(json.dumps(config, indent=2, sort_keys=True))
@@ -80,7 +90,7 @@ if args.evaluation:
             action = agent.compute_single_action(obs)
             tensor_action = torch.from_numpy(action) # 
             print(f'model: {model} \n tensor action: {tensor_action}')
-            attack_obs = Attacks.GN(model, tensor_obs, tensor_action) #
+            # attack_obs = Attacks.GN(model, tensor_obs, tensor_action) #
             obs, reward, done, info = env.step(action)
             episode_reward += reward
             tensor_obs = torch.from_numpy(obs) #

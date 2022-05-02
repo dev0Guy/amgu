@@ -1,8 +1,6 @@
 import torch
 import torchattacks
 from torch import nn
-import matplotlib.pyplot as plt
-import foolbox
 
 class Attacks(object):
 
@@ -209,13 +207,13 @@ class Attacks(object):
         attack = torchattacks.FGSM(model, eps=0.001)
         return attack(imgs,model(imgs))
 
-    @staticmethod
-    def HopSkipJump(model: nn.Module, imgs: torch.Tensor,target: torch.Tensor):
-        # criterion = foolbox.criteria.TargetedMisclassification(labels)
-        attack = foolbox.v1.attacks.HopSkipJumpAttack
-        print(attack)
-        # model.eval()
-        x = attack(imgs,model(imgs))
-        print(x)
-        return x
+    # @staticmethod
+    # def HopSkipJump(model: nn.Module, imgs: torch.Tensor,target: torch.Tensor):
+    #     # criterion = foolbox.criteria.TargetedMisclassification(labels)
+    #     attack = foolbox.v1.attacks.HopSkipJumpAttack
+    #     print(attack)
+    #     # model.eval()
+    #     x = attack(imgs,model(imgs))
+    #     print(x)
+    #     return x
 

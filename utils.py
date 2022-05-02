@@ -166,12 +166,10 @@ class ModelConfig:
     }
     
     CNN = {
-        "custom_model": None,
-        "custom_model_config": {},
         "_use_default_native_models": False,
         "_disable_preprocessor_api": True,
         "_disable_action_flattening": False,
-        "conv_filters": None,
+        "conv_filters": [[8,[3,72],1]],
         "conv_activation": "relu",
     }
     
@@ -319,3 +317,4 @@ class ModelConfig:
         # your environment instead to preprocess observations.
         "custom_preprocessor": None,
     }
+        

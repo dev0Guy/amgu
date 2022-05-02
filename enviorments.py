@@ -218,7 +218,7 @@ class SingleAgentCityFlow(gym.Env,_BaseCityFlow):
     def seed(self, seed=None):
         self._seed(seed)
 
-class MultiAgentCityFlow(MultiAgentEnv,_BaseCityFlow):
+class MultiAgentCityFlow(MultiAgentEnv,_BaseCityFlow): 
     """ Multi Agent in cityflow, each agent has its own intersection."""
 
     metadata = {'render.modes': ['human']}
