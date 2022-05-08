@@ -6,7 +6,7 @@ from ray.tune.registry import register_env
 import ray.rllib.agents.ppo as ppo
 import ray.rllib.agents.a3c as a3c
 import argparse
-# from attacks import Attacks
+from attacks import Attacks
 import torch
 from ray.rllib.models import ModelCatalog
 import models

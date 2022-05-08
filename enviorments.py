@@ -1,6 +1,7 @@
 import json
 import math
 import os
+from statistics import mean
 from typing import Tuple
 import numpy as np
 import gym
@@ -215,6 +216,12 @@ class SingleAgentCityFlow(gym.Env,_BaseCityFlow):
             reward += self.reward_func(self.eng,self.observation[:,idx],self.road_mapper[name],self.summary)
         return reward
     
+    def get_results(self):
+        res_info = {}
+        res_info['ATT'] = self.eng.get_average_travel_time()
+        res_info['queue'] = mean(self.eng.get_lane_vehicle_count().values())
+        return res_info   
+
     def seed(self, seed=None):
         self._seed(seed)
 
