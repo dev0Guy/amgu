@@ -6,6 +6,7 @@ from ray.tune.registry import register_env
 import ray.rllib.agents.ppo as ppo
 import ray.rllib.agents.a3c as a3c
 import argparse
+import ray
 from attacks import Attacks
 import torch
 from ray.rllib.models import ModelCatalog
@@ -44,6 +45,11 @@ parser.add_argument("--max-timesteps", type=int ,default=10_000, help="Stop Afte
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
 parser.add_argument("--model", choices=["FCN"],default="FCN", help="Choose Model For Algorithm To Run.")
 args = parser.parse_args()
+
+# ===============  ===============
+# runtime_env = {"working_dir": "./"}
+# ray.init(runtime_env=runtime_env)
+ray.init(log_to_driver=False)
 # =============== Register To RLlib ===============
 # tegister envs
 register_env("Single-CityFlow", lambda config: SingleAgentCityFlow(config))
@@ -76,24 +82,26 @@ print("="*65)
 if args.evaluation:
     # loading the old agent 
     agent = AGENT_MAPPER[args.algorithm](config=config)
-    agent.restore(args.load_from)
+    # agent.restore(args.load_from)
     # creating a cityflow env
     env = SingleAgentCityFlow(config["env_config"]) 
     episodes_reward = []
-    model = agent.get_policy().model.logits_layer
+    # model = agent.get_policy().model.logits_layer
+    model = agent.get_policy().model._network
     for episode_num in range(args.evaluation_episodes):
         episode_reward = 0
         done = False
         obs = env.reset() 
-        tensor_obs = torch.from_numpy(obs) 
         for step in range(args.steps_per_episode):
+            tensor_obs = torch.from_numpy(obs)[None,:].float()
             action = agent.compute_single_action(obs)
-            tensor_action = torch.from_numpy(action) # 
-            print(f'model: {model} \n tensor action: {tensor_action}')
-            # attack_obs = Attacks.GN(model, tensor_obs, tensor_action) #
-            obs, reward, done, info = env.step(action)
-            episode_reward += reward
-            tensor_obs = torch.from_numpy(obs) #
+            tensor_action = torch.from_numpy(action) 
+            attack_obs = Attacks.GN(model, tensor_obs, tensor_action) 
+            action_ = model(attack_obs)
+            action_ = torch.reshape(action_,(len(action),-1))
+            action_ = torch.argmax(action_, dim=1)
+            obs, reward, done, info = env.step(action_.numpy())
+            # episode_reward += reward
         # saving the rewards from each episode
         episodes_reward.append(episode_reward)
 else:
