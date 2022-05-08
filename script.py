@@ -43,7 +43,7 @@ parser.add_argument("--algorithm", choices=["A3C", "PPO"],default="PPO", help="C
 parser.add_argument("--result-path", type=str ,default="res/", help="Choose Path To Save Result.")
 parser.add_argument("--max-timesteps", type=int ,default=10_000, help="Stop After max-timesteps Iterations.")
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
-parser.add_argument("--model", choices=["FCN"],default="FCN", help="Choose Model For Algorithm To Run.")
+parser.add_argument("--model", choices=["FCN", "CNN"],default="FCN", help="Choose Model For Algorithm To Run.")
 args = parser.parse_args()
 
 # ===============  ===============
