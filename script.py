@@ -80,30 +80,46 @@ print("With Model:",args.model)
 print("="*65)
 # DECIDE ON EVALUATION/TRAIN
 if args.evaluation:
-    # loading the old agent 
-    agent = AGENT_MAPPER[args.algorithm](config=config)
-    # agent.restore(args.load_from)
     # creating a cityflow env
     env = SingleAgentCityFlow(config["env_config"]) 
+    # loading the old agent 
+    agent = AGENT_MAPPER[args.algorithm](config=config)
+    agent.restore(args.load_from)
     episodes_reward = []
     # model = agent.get_policy().model.logits_layer
     model = agent.get_policy().model._network
+    res_dict = {'rewards': [], 'ATT': [], 'QL': []} # for each episode
     for episode_num in range(args.evaluation_episodes):
         episode_reward = 0
         done = False
         obs = env.reset() 
         for step in range(args.steps_per_episode):
-            tensor_obs = torch.from_numpy(obs)[None,:].float()
             action = agent.compute_single_action(obs)
-            tensor_action = torch.from_numpy(action) 
-            # attack_obs = Attacks.GN(model, tensor_obs, tensor_action) 
-            action_ = model(attack_obs)
-            action_ = torch.reshape(action_,(len(action),-1))
-            action_ = torch.argmax(action_, dim=1)
-            obs, reward, done, info = env.step(action_.numpy())
-            # episode_reward += reward
-        # saving the rewards from each episode
-        episodes_reward.append(episode_reward)
+            if args.attack:
+                tensor_obs = torch.from_numpy(obs)[None,:].float()
+                tensor_action = torch.from_numpy(action) 
+                attack_obs = Attacks.GN(model, tensor_obs, tensor_action) 
+                action_ = model(attack_obs)
+                action_ = torch.reshape(action_,(len(action),-1))
+                action_ = torch.argmax(action_, dim=1)
+                obs, reward, done, info = env.step(action_.numpy())
+            else:
+                obs, reward, done, info = env.step(action)
+            episode_reward += reward
+        # saving the rewards, ATT, QL from each episode
+        res_dict['rewards'].append(episode_reward)
+        res_info = env.get_results()
+        res_dict['ATT'].append(res_info['ATT'])
+        res_dict['QL'].append(res_info['QL'])
+    path_ = args.load_from.split('/')
+    name_result = path_[3] + '_' + path_[5]
+    if args.attack:
+        attack_name = 'GN'
+        with open(f"{args.result_path}/attacks/{name_result}.pkl","wb") as file:
+            pickle.dump(res_dict, file)
+    else:
+        with open(f"{args.result_path}/{name_result}.pkl","wb") as file:
+            pickle.dump(res_dict, file)
 else:
     config["lr"]= tune.grid_search(args.lr)
     tune.run(args.algorithm,config=config,local_dir=args.result_path,checkpoint_at_end=True,mode="min",stop={"timesteps_total": args.max_timesteps})
