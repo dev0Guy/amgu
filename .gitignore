@@ -1,6 +1,7 @@
 .history/*
-CityFlow/.
+CityFlow
 __pycache__/
 *.py[cod]
 res/*
 test.py
+traffic/.
