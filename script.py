@@ -37,15 +37,14 @@ parser.add_argument("--evaluation-interval", type=int, default=3, help="How Many
 parser.add_argument("--evaluation-episodes", type=int, default=20, help="How Many Evalation Episodes.")
 parser.add_argument('--lr', nargs='+', type=float, default=[0.1], help="Which LR To Run Expirent MULTI.")
 parser.add_argument("--config-path", type=str, default="examples/1x1/config.json", help="Path For Config File (cityflow).")
-parser.add_argument("--steps-per-episode", type=int, default=1000, help="Number Of Step Before ENV Reset.")
-parser.add_argument("--reward-function", choices=["waiting_count", "avg_travel_time", "delay_from_opt", "exp_delay_from_opt"],default="delay_from_opt", help="Choose Reward Function For Cityflow.")
+parser.add_argument("--steps-per-episode", type=int, default=800, help="Number Of Step Before ENV Reset.")
+parser.add_argument("--reward-function", choices=["waiting_count", "avg_travel_time", "delay_from_opt", "exp_delay_from_opt"],default="waiting_count", help="Choose Reward Function For Cityflow.")
 parser.add_argument("--algorithm", choices=["A3C", "PPO"],default="PPO", help="Choose Algorithm From Ray.")
 parser.add_argument("--result-path", type=str ,default="res/", help="Choose Path To Save Result.")
-parser.add_argument("--max-timesteps", type=int ,default=10_000, help="Stop After max-timesteps Iterations.")
+parser.add_argument("--max-timesteps", type=int ,default=80_000, help="Stop After max-timesteps Iterations.")
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
-parser.add_argument("--model", choices=["FCN", "CNN"],default="FCN", help="Choose Model For Algorithm To Run.")
+parser.add_argument("--model", choices=["CNN","Prototype"],default="Prototype", help="Choose Model For Algorithm To Run.")
 args = parser.parse_args()
-
 # ===============  ===============
 # runtime_env = {"working_dir": "./"}
 # ray.init(runtime_env=runtime_env)
@@ -57,6 +56,7 @@ register_env("Multi-CityFlow", lambda config: MultiAgentCityFlow(config))
 # register model
 ModelCatalog.register_custom_model("CNN", models.CNN)
 ModelCatalog.register_custom_model("FCN", models.FCN)
+ModelCatalog.register_custom_model("Prototype", models.Prototype)
 # =============== CONFIG ===============
 config = ALGORITHM_MAPPER[args.algorithm]
 config["env"] = "Multi-CityFlow" if args.multi_agent else "Single-CityFlow"

@@ -11,7 +11,7 @@ import numpy as np
 tf1, tf, tfv = try_import_tf()
 torch, nn = try_import_torch()
 # ======= MODELS =======
-class _BaseModel(TorchModelV2, nn.Module):
+class _ModelWrapper(TorchModelV2, nn.Module):
     """
         Simple Fully Connected Network Model
     """
@@ -28,9 +28,13 @@ class _BaseModel(TorchModelV2, nn.Module):
         self.multi = action_type is gym.spaces.Dict
         self._output: torch.Tensor = None  
         
+    def _preprocess(self,obs: torch.Tensor):
+        return obs
+            
     @override(ModelV2)
-    def forward(self, input_dict: dict, state: list, seq_lens) -> tuple[torch.Tensor,list]: 
+    def forward(self, input_dict: dict, state: list, seq_lens): 
         input = input_dict["obs"]
+        input = self._preprocess(input)
         if type(input) is torch.Tensor:
             self._output = self._network(input)
         else:
@@ -45,16 +49,13 @@ class _BaseModel(TorchModelV2, nn.Module):
         assert self._output is not None, "must call forward first!"
         return torch.mean(self._output, -1)
 
-class FCN(_BaseModel):
+class FCN(_ModelWrapper):
     """
         Simple Fully Connected Network Model
     """
     def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
         super().__init__(obs_space, action_space, num_outputs,model_config, name)
         input_size: int = np.prod(obs_space.shape)
-        if self.multi:
-            input_size =  input_size // len(action_space)
-            num_outputs = num_outputs // len(action_space)
         hidden_size: int = 100
         self._network: nn.Sequential = nn.Sequential(
             nn.Flatten(1,-1),
@@ -65,16 +66,17 @@ class FCN(_BaseModel):
             nn.Linear(in_features=hidden_size,out_features=num_outputs),
         )
 
-class CNN(_BaseModel):
+class CNN(_ModelWrapper):
     """
         Convolutional Neural Network Model
     """
     def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
         super().__init__(obs_space, action_space, num_outputs,model_config, name)
         self._network: nn.Sequential = nn.Sequential(
-            nn.Conv3d(in_channels=3,out_channels=100,kernel_size=(1,72,40),stride=(1, 72, 40)),
+            nn.Conv3d(in_channels=3,out_channels=100,kernel_size=(1,72,1),stride=(1, 72, 1)),
+            nn.MaxPool3d(kernel_size=(1,1,2)),
             nn.ReLU(),
-            nn.Conv3d(in_channels=100,out_channels=20,kernel_size=(1,1,1)),
+            nn.Conv3d(in_channels=100,out_channels=20,kernel_size=(1,1,20)),
             nn.ReLU(),
             nn.Flatten(3,-1),
             nn.Conv2d(in_channels=20,out_channels=5,kernel_size=(1,1)),
@@ -83,6 +85,51 @@ class CNN(_BaseModel):
             nn.Linear(in_features=5*obs_space.shape[1],out_features=num_outputs),
         )        
     
+class Prototype(_ModelWrapper):
+    def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
+        super().__init__(obs_space, action_space, num_outputs,model_config, name)
+        num_outputs = int(num_outputs//obs_space.shape[1])
+        self._network = nn.Sequential(
+            nn.Linear(in_features=obs_space.shape[2],out_features=num_outputs),
+            nn.Flatten(1,-1),
+        )
+
+    def _preprocess(self,obs: torch.Tensor):
+        obs = obs[:,0]
+        new_size = obs.size()[:-1]
+        new_size = (*new_size,-1)
+        obs = obs.reshape(new_size)
+        obs =  torch.count_nonzero(obs,dim=-1).float()
+        obs = obs.reshape(obs.size()[0],obs.size()[1],-1)
+        return obs
+
+class Queue(_ModelWrapper):
+    """
+        Convolutional Neural Network Model
+    """
+    def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
+        super().__init__(obs_space, action_space, num_outputs,model_config, name)
+        self.action_space = action_space
+        self.num_outputs = num_outputs
+        self.x = nn.Sequential(
+            nn.Linear(1,1)
+        )
+    
+    def _network(self,input: torch.Tensor):
+        print("#"*50)
+        print(input.size())
+        print("#"*50)
+    
+    
+    def _preprocess(self,obs: torch.Tensor):
+        obs = obs[:,0]
+        new_size = obs.size()[:-1]
+        new_size = (*new_size,-1)
+        obs = obs.reshape(new_size)
+        obs =  torch.count_nonzero(obs,dim=-1).float()
+        obs = obs.reshape(obs.size()[0],obs.size()[1],-1)
+        return obs
+
 
 # class TorchRNNModel(RecurrentNetwork, nn.Module):
 #     def __init__(
