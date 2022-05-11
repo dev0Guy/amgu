@@ -47,7 +47,7 @@ parser.add_argument("--algorithm", choices=["A3C", "PPO"],default="PPO", help="C
 parser.add_argument("--result-path", type=str ,default="res/", help="Choose Path To Save Result.")
 parser.add_argument("--max-timesteps", type=int ,default=160_000, help="Stop After max-timesteps Iterations.")
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
-parser.add_argument("--model", choices=["CNN","Prototype"],default="Prototype", help="Choose Model For Algorithm To Run.")
+parser.add_argument("--model", choices=["CNN","Prototype","Queue"],default="Prototype", help="Choose Model For Algorithm To Run.")
 args = parser.parse_args()
 # ===============  ===============
 # runtime_env = {"working_dir": "./"}
@@ -59,7 +59,7 @@ register_env("Single-CityFlow", lambda config: SingleAgentCityFlow(config))
 register_env("Multi-CityFlow", lambda config: MultiAgentCityFlow(config))
 # register model
 ModelCatalog.register_custom_model("CNN", models.CNN)
-ModelCatalog.register_custom_model("FCN", models.FCN)
+ModelCatalog.register_custom_model("Queue", models.Queue)
 ModelCatalog.register_custom_model("Prototype", models.Prototype)
 # =============== CONFIG ===============
 config = ALGORITHM_MAPPER[args.algorithm]
@@ -82,6 +82,7 @@ print(json.dumps(config, indent=2, sort_keys=True))
 print("With Actor:",args.algorithm)
 print("With Model:",args.model)
 print("="*65)
+is_queue = config['model']['custom_model'] == "Queue"
 # DECIDE ON EVALUATION/TRAIN
 if args.evaluation:
     # creating a cityflow env
@@ -91,15 +92,15 @@ if args.evaluation:
     agent.restore(args.load_from)
     episodes_reward = []
     # model = agent.get_policy().model.logits_layer
-    model = agent.get_policy().model._network
+    model = agent.get_policy().model._network if not is_queue else models.Queue(env.action_impact)
     res_dict = {'rewards': [], 'ATT': [], 'QL': []} # for each episode
     for episode_num in range(args.evaluation_episodes):
         episode_reward = 0
         done = False
         obs = env.reset() 
         for step in range(args.steps_per_episode):
-            action = agent.compute_single_action(obs)
-            if args.attack:
+            action = agent.compute_single_action(obs) if not is_queue else model(obs)
+            if args.attack and not is_queue:
                 tensor_obs = torch.from_numpy(obs)[None,:].float()
                 tensor_action = torch.from_numpy(action) 
                 attack_obs = Attacks.GN(model, tensor_obs, tensor_action) 
@@ -125,5 +126,7 @@ if args.evaluation:
         with open(f"{args.result_path}/{name_result}.pkl","wb") as file:
             pickle.dump(res_dict, file)
 else:
+    if is_queue:
+        raise Warning("Can't Train With Queue Model Only Interface!")
     config["lr"]= tune.grid_search(args.lr)
     tune.run(args.algorithm,config=config,local_dir=args.result_path,checkpoint_at_end=True,mode="min",stop={"timesteps_total": args.max_timesteps})

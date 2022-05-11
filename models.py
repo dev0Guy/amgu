@@ -105,23 +105,35 @@ class Prototype(_ModelWrapper):
         obs = obs.reshape(obs.size()[0],obs.size()[1],-1)
         return obs
 
-class Queue(_ModelWrapper):
+class Queue():
     """
         Convolutional Neural Network Model
     """
-    def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
-        super().__init__(obs_space, action_space, num_outputs,model_config, name)
-        self.action_space = action_space
-        self.num_outputs = num_outputs
-        self.x = nn.Sequential(
-            nn.Linear(1,1)
-        )
-    
-    def _network(self,input: torch.Tensor):
-        print("#"*50)
-        print(input.size())
-        print("#"*50)
-    
+    def __init__(self,action_impact:list):
+        if not action_impact:
+            raise Warning('Action Impact Cant be None')
+        self.action_impact = action_impact
+
+    def __call__(self,obs: torch.Tensor):
+        obs = self._preprocess(obs)
+        output = [] 
+        for sample in obs:
+            action_lst = list()
+            for i_idx,intersection in enumerate(sample):
+                phase_summer = dict()
+                for l_idx,lane_count in enumerate(intersection):
+                    if l_idx not in self.action_impact[i_idx]:
+                        continue
+                    phase = self.action_impact[i_idx][l_idx]
+                    if phase not in phase_summer:
+                        phase_summer[phase] = 0
+                    phase_summer[phase]+= lane_count.detach().float()
+                phase_summer =  np.array(list(phase_summer.values()))
+                action_lst.append(np.argmax(phase_summer))
+            action_lst = np.array(action_lst)
+            output.append(torch.from_numpy(action_lst))
+        output = torch.stack(output)
+        return output
     
     def _preprocess(self,obs: torch.Tensor):
         obs = obs[:,0]

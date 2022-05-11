@@ -12,7 +12,7 @@ from utils import Rewards
 from collections import namedtuple
 from typing import Callable
 
-Preprocess = namedtuple("Preprocess", ["eng","road_mapper","state_shape", "intersections", "actionSpaceArray", "intersectionNames", "summary"])
+Preprocess = namedtuple("Preprocess", ["eng","road_mapper","state_shape", "intersections", "actionSpaceArray","action_impact", "intersectionNames", "summary"])
 
 class _BaseCityFlow():
     """ 
@@ -28,7 +28,7 @@ class _BaseCityFlow():
         self.reward_func: Callable = Rewards.get(self.reward_func)
         information: Preprocess = self._preprocess(config_path)
         # get all information from files
-        self.eng, self.road_mapper, self.state_shape, self.intersections, self.actionSpaceArray, self.intersectionNames, self.summary = information
+        self.eng, self.road_mapper, self.state_shape, self.intersections, self.actionSpaceArray,self.action_impact, self.intersectionNames, self.summary = information
         self.is_done: bool = False
         self.current_step: int = 0
     
@@ -41,6 +41,7 @@ class _BaseCityFlow():
             Preprocess: [eng,road_mapper,state_shape, intersections, actionSpaceArray, intersectionNames, summary].
         """
         # _____ init data _____
+        action_impact: list = [] # for each intersection each light phase effect what lane
         intersections: dict = {}
         road_mapper: dict = {}
         summary: dict = {
@@ -71,6 +72,7 @@ class _BaseCityFlow():
                 incomingLanes: list = []
                 outgoingLanes: list = []
                 directions: list = []
+                phase_affect_on_lanes: list = []
                 # run on roads 
                 for road_link in intersection['roadLinks']:
                     incomingRoads: list = []
@@ -82,8 +84,13 @@ class _BaseCityFlow():
                         outgoingRoads.append(road_link['endRoad'] + '_' + str(lane_link['endLaneIndex']))
                     incomingLanes.append(incomingRoads)
                     outgoingLanes.append(outgoingRoads)
+                lane_to_phase = dict()
+                for phase,traffic_light_phase in enumerate(intersection['trafficLight']['lightphases']):
+                    for _,lane_link in enumerate(traffic_light_phase['availableRoadLinks']):
+                        lane_to_phase[lane_link] = phase
                 incomingLanes = np.array(incomingLanes)
                 outgoingLanes = np.array(outgoingLanes)
+                action_impact.append(lane_to_phase)
                 # summary of all input in intesection id
                 intersections[intersection['id']] = [
                                                         len(intersection['trafficLight']['lightphases']),
@@ -106,29 +113,7 @@ class _BaseCityFlow():
         summary['division'] = math.ceil(summary['size']/(summary['length'] + summary['minGap']))
         # define state size
         state_shape = (channel_num,len(intersections),(in_lane+out_lane),summary['division'])
-        return Preprocess(eng, road_mapper, state_shape, intersections, actionSpaceArray, intersectionNames, summary)
-
-        #Check that input action size is equal to number of intersections
-        if len(action) != len(intersectionNames):
-            raise Warning('Action length not equal to number of intersections')
-        #Set each trafficlight phase to specified action
-        for i in range(len(intersectionNames)):
-            eng.set_tl_phase(intersectionNames[i], action[i])
-        #env step
-        eng.next_step()
-        #observation
-        observation = self._get_observation()
-
-        #reward
-        self.reward = self._get_reward()
-        #Detect if Simulation is finshed for done variable
-        self.current_step += 1
-
-        if self.current_step + 1 == self.steps_per_episode:
-            self.is_done = True
-
-        #return observation, reward, done, info
-        return self.observation, self.reward, self.is_done, {}
+        return Preprocess(eng, road_mapper, state_shape, intersections, actionSpaceArray,action_impact, intersectionNames, summary)
 
     def _step(self,action: np.array):
         #Check that input action size is equal to number of intersections
