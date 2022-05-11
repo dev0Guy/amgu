@@ -130,9 +130,8 @@ class _BaseCityFlow():
         self.reward = self._get_reward()
         #Detect if Simulation is finshed for done variable
         self.current_step += 1
-        if self.current_step + 1 == self.steps_per_episode:
+        if self.current_step >= self.steps_per_episode:
             self.is_done = True
-        #return observation, reward, done, info
         return self.observation, self.reward, self.is_done, {}
         
     def _reset(self):
