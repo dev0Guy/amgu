@@ -7,7 +7,7 @@ import ray.rllib.agents.ppo as ppo
 import ray.rllib.agents.a3c as a3c
 import argparse
 import ray
-from attacks import Attacks
+# from attacks import Attacks
 import torch
 from ray.rllib.models import ModelCatalog
 import models
@@ -41,7 +41,7 @@ parser.add_argument("--steps-per-episode", type=int, default=800, help="Number O
 parser.add_argument("--reward-function", choices=["waiting_count", "avg_travel_time", "delay_from_opt", "exp_delay_from_opt"],default="waiting_count", help="Choose Reward Function For Cityflow.")
 parser.add_argument("--algorithm", choices=["A3C", "PPO"],default="PPO", help="Choose Algorithm From Ray.")
 parser.add_argument("--result-path", type=str ,default="res/", help="Choose Path To Save Result.")
-parser.add_argument("--max-timesteps", type=int ,default=80_000, help="Stop After max-timesteps Iterations.")
+parser.add_argument("--max-timesteps", type=int ,default=160_000, help="Stop After max-timesteps Iterations.")
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
 parser.add_argument("--model", choices=["CNN","Prototype"],default="Prototype", help="Choose Model For Algorithm To Run.")
 args = parser.parse_args()
@@ -96,7 +96,7 @@ if args.evaluation:
             tensor_obs = torch.from_numpy(obs)[None,:].float()
             action = agent.compute_single_action(obs)
             tensor_action = torch.from_numpy(action) 
-            attack_obs = Attacks.GN(model, tensor_obs, tensor_action) 
+            # attack_obs = Attacks.GN(model, tensor_obs, tensor_action) 
             action_ = model(attack_obs)
             action_ = torch.reshape(action_,(len(action),-1))
             action_ = torch.argmax(action_, dim=1)

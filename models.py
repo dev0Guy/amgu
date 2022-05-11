@@ -89,8 +89,10 @@ class Prototype(_ModelWrapper):
     def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
         super().__init__(obs_space, action_space, num_outputs,model_config, name)
         num_outputs = int(num_outputs//obs_space.shape[1])
+        hidden_size = 10
         self._network = nn.Sequential(
-            nn.Linear(in_features=obs_space.shape[2],out_features=num_outputs),
+            nn.Linear(in_features=obs_space.shape[2],out_features=hidden_size),
+            nn.Linear(in_features=hidden_size,out_features=num_outputs),
             nn.Flatten(1,-1),
         )
 
