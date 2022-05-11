@@ -203,7 +203,7 @@ class SingleAgentCityFlow(gym.Env,_BaseCityFlow):
     def get_results(self):
         res_info = {}
         res_info['ATT'] = self.eng.get_average_travel_time()
-        res_info['queue'] = mean(self.eng.get_lane_vehicle_count().values())
+        res_info['QL'] = self.eng.get_lane_vehicle_count().values()
         return res_info   
 
     def seed(self, seed=None):
