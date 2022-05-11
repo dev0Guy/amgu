@@ -11,6 +11,8 @@ import ray
 import torch
 from ray.rllib.models import ModelCatalog
 import models
+import pickle
+import numpy as np
 # =============== CONST ===============
 ALGORITHM_MAPPER = {
     "A3C": AlgorithemsConfig.A3C,
@@ -26,8 +28,10 @@ AGENT_MAPPER = {
 # }
 # =============== CLI ARGS ===============
 parser = argparse.ArgumentParser()
+parser.add_argument('--attack', action='store_true', help="Attack run")
 parser.add_argument('--evaluation', action='store_true', help="Evaluation run")
 parser.add_argument("--multi-agent",action='store_true', help="Single Or Multi agent config")
+parser.set_defaults(attack=False)
 parser.set_defaults(evaluation=False)
 parser.set_defaults(multi_agent=False)
 # share arguments
