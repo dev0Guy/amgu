@@ -83,8 +83,8 @@ class CNN(_ModelWrapper):
             nn.ReLU(),
             nn.Flatten(),
             nn.Linear(in_features=5*obs_space.shape[1],out_features=500),
-            nn.Linear(in_features=5*obs_space.shape[1],out_features=250),
-            nn.Linear(in_features=5*obs_space.shape[1],out_features=num_outputs),
+            nn.Linear(in_features=500,out_features=200),
+            nn.Linear(in_features=200,out_features=num_outputs),
         )        
     
 class Prototype(_ModelWrapper):
