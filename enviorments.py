@@ -11,6 +11,9 @@ from ray.rllib.utils.typing import MultiAgentDict, AgentID
 from utils import Rewards
 from collections import namedtuple
 from typing import Callable
+import logging
+
+logger = logging.getLogger(__name__)
 
 Preprocess = namedtuple("Preprocess", ["eng","road_mapper","state_shape", "intersections", "actionSpaceArray","action_impact", "intersectionNames", "summary"])
 
@@ -31,6 +34,7 @@ class _BaseCityFlow():
         self.eng, self.road_mapper, self.state_shape, self.intersections, self.actionSpaceArray,self.action_impact, self.intersectionNames, self.summary = information
         self.is_done: bool = False
         self.current_step: int = 0
+        self.prev_action = None
     
     def _preprocess(self,config_path: str,channel_num = 3):
         """ Preprocess all data and pass all information for initial.
@@ -115,27 +119,46 @@ class _BaseCityFlow():
         state_shape = (channel_num,len(intersections),(in_lane+out_lane),summary['division'])
         return Preprocess(eng, road_mapper, state_shape, intersections, actionSpaceArray,action_impact, intersectionNames, summary)
 
+
+    def _activate_action(self,action):
+        for i in range(len(self.intersectionNames)):
+            self.eng.set_tl_phase(self.intersectionNames[i], action[i])
+        self.eng.next_step()
+
+    def _activate_cooldown(self):
+        for i in range(len(self.intersectionNames)):
+            self.eng.set_tl_phase(self.intersectionNames[i], 0)
+        self.eng.next_step()
+        self.eng.next_step()
+        self.eng.next_step()
+        self.eng.next_step()
+        self.eng.next_step()
+        self.eng.next_step()
+        
+        
+
     def _step(self,action: np.array):
         #Check that input action size is equal to number of intersections
         if len(action) != len(self.intersectionNames):
             raise Warning('Action length not equal to number of intersections')
         #Set each trafficlight phase to specified action
-        for i in range(len(self.intersectionNames)):
-            self.eng.set_tl_phase(self.intersectionNames[i], action[i])
+        self._activate_action(action)
+        if action != self.prev_action:
+            self._activate_cooldown()
+            self.current_step += 1  
+        self.prev_action = action
         #env step
-        self.eng.next_step()
         #observation
         self.observation = self._get_observation()
         #reward
         self.reward = self._get_reward()
         #Detect if Simulation is finshed for done variable
         self.current_step += 1
-        if self.current_step >= self.steps_per_episode:
-            self.is_done = True
+        self.is_done = (self.current_step >= self.steps_per_episode)
         return self.observation, self.reward, self.is_done, {}
         
     def _reset(self):
-        self.eng.reset(seed=False)
+        self.eng.reset(seed=420)
         self.is_done = False
         self.current_step = 0
         return self._get_observation()
@@ -206,7 +229,7 @@ class SingleAgentCityFlow(gym.Env,_BaseCityFlow):
         res_info['QL'] = self.eng.get_lane_vehicle_count().values()
         return res_info   
 
-    def seed(self, seed=None):
+    def seed(self, seed=420):
         self._seed(seed)
 
 class MultiAgentCityFlow(MultiAgentEnv,_BaseCityFlow): 

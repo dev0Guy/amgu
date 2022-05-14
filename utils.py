@@ -1,7 +1,6 @@
 import numpy as np
 
 class Rewards:
-    
     @staticmethod
     def waiting_count(eng,intersection_state,roads,summary):
         waiting = eng.get_lane_waiting_vehicle_count()
@@ -72,13 +71,14 @@ class AlgorithemsConfig:
         "use_gae": True,
         # The GAE (lambda) parameter.
         "lambda": 1.0,
+        "gamma": 1.0,
         # Initial coefficient for KL divergence.
         "kl_coeff": 0.2,
         # Size of batches collected from each worker.
         "rollout_fragment_length": 200,
         # Number of timesteps collected for each SGD round. This defines the size
         # of each SGD epoch.
-        "train_batch_size": 4000,
+        # "train_batch_size": 4000,
         # Total SGD batch size across all devices for SGD. This defines the
         # minibatch size within each epoch.
         "sgd_minibatch_size": 128,
@@ -114,6 +114,7 @@ class AlgorithemsConfig:
         "kl_target": 0.01,
         # Whether to rollout "complete_episodes" or "truncate_episodes".
         "batch_mode": "truncate_episodes",
+        
     }
 
     A3C = {
@@ -128,7 +129,7 @@ class AlgorithemsConfig:
         # GAE(gamma) parameter
         "lambda": 1.0,
         # Max global norm for each gradient calculated by worker
-        "grad_clip": 40.0,
+        "grad_clip": 10000.0,
         # Learning rate
         "lr": 0.0001,
         # Learning rate schedule
@@ -152,7 +153,7 @@ class AlgorithemsConfig:
         # Fixes a severe performance problem with A3C. Setting this to True leads to a
         # speedup of up to 3x for a large number of workers and heavier
         # gradient computations (e.g. ray/rllib/tuned_examples/a3c/pong-a3c.yaml)).
-        "_disable_execution_plan_api": True,
+        "_disable_execution_plan_api": False,
     }
     
 class ModelConfig:
