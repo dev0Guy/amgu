@@ -13,6 +13,7 @@ from ray.rllib.models import ModelCatalog
 import models
 import pickle
 import numpy as np
+
 # =============== CONST ===============
 ALGORITHM_MAPPER = {
     "A3C": AlgorithemsConfig.A3C,
@@ -129,9 +130,10 @@ if args.evaluation:
 else:
     if is_queue:
         raise Warning("Can't Train With Queue Model Only Interface!")
-    config["lr"]= tune.grid_search(args.lr)
+    # config["lr"]= tune.grid_search(args.lr)
     tune.run(args.algorithm,config=config,local_dir=args.result_path,checkpoint_at_end=True,mode="min",
                 stop={
                     "training_iteration": args.max_iter,
                 }
             )
+    ray.shutdown()

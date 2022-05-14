@@ -23,7 +23,7 @@ class _ModelWrapper(TorchModelV2, nn.Module):
         action_type: type = type(action_space)
         
         assert obs_type in [gym.spaces.box.Box,gym.spaces.Dict]
-        assert action_type in [gym.spaces.MultiDiscrete,gym.spaces.Dict]
+        assert action_type in [gym.spaces.MultiDiscrete,gym.spaces.Discrete,gym.spaces.Dict]
         
         self.multi = action_type is gym.spaces.Dict
         self._output: torch.Tensor = None  
@@ -73,7 +73,7 @@ class CNN(_ModelWrapper):
     def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
         super().__init__(obs_space, action_space, num_outputs,model_config, name)
         self._network: nn.Sequential = nn.Sequential(
-            nn.Conv3d(in_channels=3,out_channels=100,kernel_size=(1,72,1),stride=(1, 72, 1)),
+            nn.Conv3d(in_channels=3,out_channels=100,kernel_size=(1,32,1),stride=(1, 32, 1)),
             nn.MaxPool3d(kernel_size=(1,1,2)),
             nn.ReLU(),
             nn.Conv3d(in_channels=100,out_channels=20,kernel_size=(1,1,20)),
