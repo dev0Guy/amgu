@@ -82,6 +82,8 @@ class CNN(_ModelWrapper):
             nn.Conv2d(in_channels=20,out_channels=5,kernel_size=(1,1)),
             nn.ReLU(),
             nn.Flatten(),
+            nn.Linear(in_features=5*obs_space.shape[1],out_features=500),
+            nn.Linear(in_features=5*obs_space.shape[1],out_features=250),
             nn.Linear(in_features=5*obs_space.shape[1],out_features=num_outputs),
         )        
     
