@@ -1,4 +1,5 @@
 # =============== IMPORTS ===============
+import numpy as np
 from ray.rllib.models.catalog import ModelCatalog
 from ray.tune.registry import register_env
 import ray.rllib.agents.ppo as ppo
@@ -41,7 +42,7 @@ parser.add_argument("--steps-per-episode", type=int, default=400, help="Number O
 parser.add_argument("--reward-function", choices=["waiting_count", "avg_travel_time", "delay_from_opt", "exp_delay_from_opt"],default="waiting_count", help="Choose Reward Function For Cityflow.")
 parser.add_argument("--algorithm", choices=["A3C", "PPO","DQN"],default="DQN", help="Choose Algorithm From Ray.")
 parser.add_argument("--result-path", type=str ,default="res/", help="Choose Path To Save Result.")
-parser.add_argument("--max-iter", type=int ,default=140, help="Stop After max-timesteps Iterations.")
+parser.add_argument("--max-iter", type=int ,default=50, help="Stop After max-timesteps Iterations.")
 parser.add_argument("--load-from", type=str, help="Result Directory Path (trained).")
 parser.add_argument("--model", choices=["CNN","Prototype","Queue"],default="Prototype", help="Choose Model For Algorithm To Run.")
 args = parser.parse_args()
@@ -80,8 +81,9 @@ if args.evaluation:
     # creating a cityflow env
     env = SingleAgentCityFlow(config["env_config"]) 
     # loading the old agent 
-    agent = ALGORITHM_MAPPER[args.algorithm](config=config)
-    agent.restore(args.load_from)
+    agent = None if is_queue else ALGORITHM_MAPPER[args.algorithm](config=config)
+    if agent != None:
+        agent.restore(args.load_from)
     episodes_reward = []
     # model = agent.get_policy().model.logits_layer
     model = agent.get_policy().model._network if not is_queue else models.Queue(env.action_impact)
@@ -90,10 +92,10 @@ if args.evaluation:
         episode_reward = 0
         done = False
         obs = env.reset() 
+        tensor_obs = torch.from_numpy(obs[None,:])
         for step in range(args.steps_per_episode):
-            action = agent.compute_single_action(obs) if not is_queue else model(obs)
+            action = agent.compute_single_action(obs) if not is_queue else model(tensor_obs)
             if args.attack and not is_queue:
-                tensor_obs = torch.from_numpy(obs)[None,:].float()
                 tensor_action = torch.from_numpy(action) 
                 # attack_obs = Attacks.GN(model, tensor_obs, tensor_action) 
                 # action_ = model(attack_obs)
@@ -103,6 +105,10 @@ if args.evaluation:
                 obs, reward, done, info = env.step(action_.numpy())
             else:
                 obs, reward, done, info = env.step(action)
+            tensor_obs = torch.from_numpy(obs)[None,:].float()
+
+            
+
             episode_reward += reward
         # saving the rewards, ATT, QL from each episode
         res_dict['rewards'].append(episode_reward)
@@ -126,4 +132,3 @@ else:
     ray.tune.run(args.algorithm,config=config,local_dir=args.result_path,checkpoint_at_end=True,mode="min",
                     stop={"training_iteration": args.max_iter})
     ray.shutdown()
-    # 

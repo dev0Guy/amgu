@@ -14,7 +14,7 @@ from typing import Callable
 import logging
 
 __all__ = ['SingleAgentCityFlow','SingleIntersection']
-
+COOLDOWN = 9
 logger = logging.getLogger(__name__)
 
 Preprocess = namedtuple("Preprocess", ["eng","road_mapper","state_shape", "intersections", "actionSpaceArray","action_impact", "intersectionNames", "summary"])
@@ -38,7 +38,7 @@ class _Wrapper():
         self.current_step: int = 0
         self.prev_action = None
     
-    def _preprocess(self,config_path: str,channel_num = 3):
+    def _preprocess(self,config_path: str,channel_num = 4):
         """ Preprocess all data and pass all information for initial.
         Args:
             config_path (str): path to config file.
@@ -133,14 +133,8 @@ class _Wrapper():
     def _activate_cooldown(self):
         for i in range(len(self.intersectionNames)):
             self.eng.set_tl_phase(self.intersectionNames[i], 0)
-        self.eng.next_step()
-        self.eng.next_step()
-        self.eng.next_step()
-        self.eng.next_step()
-        self.eng.next_step()
-        self.eng.next_step()
-        
-        
+        for i in range(COOLDOWN):
+            self.eng.next_step()    
 
     def _step(self,action: np.array):
         #Check that input action size is equal to number of intersections
@@ -149,7 +143,7 @@ class _Wrapper():
         #Set each trafficlight phase to specified action
         self._activate_action(action)
         if action != self.prev_action:
-            # self._activate_cooldown()
+            self._activate_cooldown()
             pass
         self.current_step += 1  
         self.prev_action = action
@@ -214,8 +208,10 @@ class SingleAgentCityFlow(gym.Env,_Wrapper):
                     distance = info['vehicle_distance'][vehicle_id]
                     speed = info['vehicle_speed'][vehicle_id]
                     division_idx = int(distance//division_size)
-                    state[0,row,col,division_idx] = speed / self.summary['maxSpeed']
+                    norm_speed = speed / self.summary['maxSpeed']
+                    state[0,row,col,division_idx] = norm_speed
                     state[1,row,col,division_idx] = int(distance%division_size) / division_size
+                    state[3,row,col,division_idx] = norm_speed == 0
                     if leader_id:
                         leader_distance = info['vehicle_distance'][vehicle_id]
                         state[2,row,col,division_idx] = (leader_distance - distance) / self.summary['size']              

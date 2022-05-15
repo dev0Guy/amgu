@@ -59,7 +59,7 @@ class CNN(_ModelWrapper):
     def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
         super().__init__(obs_space, action_space, num_outputs,model_config, name)
         self._network: nn.Sequential = nn.Sequential(
-            nn.Conv3d(in_channels=3,out_channels=100,kernel_size=(1,32,1),stride=(1, 32, 1)),
+            nn.Conv3d(in_channels=obs_space.shape[0],out_channels=100,kernel_size=(1,32,1),stride=(1, 32, 1)),
             nn.MaxPool3d(kernel_size=(1,1,2)),
             nn.ReLU(),
             nn.Conv3d(in_channels=100,out_channels=20,kernel_size=(1,1,20)),
@@ -84,14 +84,20 @@ class Prototype(_ModelWrapper):
             nn.Flatten(1,-1),
         )
 
+
     def _preprocess(self,obs: torch.Tensor):
-        obs = obs[:,0]
-        new_size = obs.size()[:-1]
-        new_size = (*new_size,-1)
-        obs = obs.reshape(new_size)
+        obs = obs[:,3] 
         obs =  torch.count_nonzero(obs,dim=-1).float()
-        obs = obs.reshape(obs.size()[0],obs.size()[1],-1)
         return obs
+
+    # def _preprocess(self,obs: torch.Tensor):
+    #     obs = obs[:,0]
+    #     new_size = obs.size()[:-1]
+    #     new_size = (*new_size,-1)
+    #     obs = obs.reshape(new_size)
+    #     obs =  torch.count_nonzero(obs,dim=-1).float()
+    #     obs = obs.reshape(obs.size()[0],obs.size()[1],-1)
+    #     return obs
 
 class Queue():
     """
@@ -108,15 +114,12 @@ class Queue():
         for sample in obs:
             action_lst = list()
             for i_idx,intersection in enumerate(sample):
-                phase_summer = dict()
+                phase_summer = np.zeros(max(set(self.action_impact[i_idx].values()))+1)
                 for l_idx,lane_count in enumerate(intersection):
                     if l_idx not in self.action_impact[i_idx]:
                         continue
                     phase = self.action_impact[i_idx][l_idx]
-                    if phase not in phase_summer:
-                        phase_summer[phase] = 0
                     phase_summer[phase]+= lane_count.detach().float()
-                phase_summer =  np.array(list(phase_summer.values()))
                 action_lst.append(np.argmax(phase_summer))
             action_lst = np.array(action_lst)
             output.append(torch.from_numpy(action_lst))
@@ -124,12 +127,8 @@ class Queue():
         return output
     
     def _preprocess(self,obs: torch.Tensor):
-        obs = obs[:,0]
-        new_size = obs.size()[:-1]
-        new_size = (*new_size,-1)
-        obs = obs.reshape(new_size)
+        obs = obs[:,3] 
         obs =  torch.count_nonzero(obs,dim=-1).float()
-        obs = obs.reshape(obs.size()[0],obs.size()[1],-1)
         return obs
 
 # class TorchRNNModel(RecurrentNetwork, nn.Module):
