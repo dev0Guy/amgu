@@ -13,7 +13,6 @@ for resarch purposes on top of cityflow , Can interact with sumo throw convertin
 
 ## Contributing
 Most of the work as been done (and writted) by Guy Arieli & Amit Nadam.
-thanks for Eran & vlad for been tag along.
 
 Please make sure to update tests as appropriate.
 
