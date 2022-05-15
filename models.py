@@ -8,6 +8,9 @@ from ray.rllib.models.torch.recurrent_net import RecurrentNetwork
 import gym
 import numpy as np
 # import what installed
+
+__all__ = ['CNN','Prototype','Queue']
+
 tf1, tf, tfv = try_import_tf()
 torch, nn = try_import_torch()
 # ======= MODELS =======
@@ -48,23 +51,6 @@ class _ModelWrapper(TorchModelV2, nn.Module):
     def value_function(self) -> torch.Tensor:
         assert self._output is not None, "must call forward first!"
         return torch.mean(self._output, -1)
-
-class FCN(_ModelWrapper):
-    """
-        Simple Fully Connected Network Model
-    """
-    def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
-        super().__init__(obs_space, action_space, num_outputs,model_config, name)
-        input_size: int = np.prod(obs_space.shape)
-        hidden_size: int = 100
-        self._network: nn.Sequential = nn.Sequential(
-            nn.Flatten(1,-1),
-            nn.Linear(in_features=input_size,out_features=hidden_size),
-            nn.ReLU(),
-            nn.Linear(in_features=hidden_size,out_features=hidden_size),
-            nn.ReLU(),
-            nn.Linear(in_features=hidden_size,out_features=num_outputs),
-        )
 
 class CNN(_ModelWrapper):
     """
@@ -145,7 +131,6 @@ class Queue():
         obs =  torch.count_nonzero(obs,dim=-1).float()
         obs = obs.reshape(obs.size()[0],obs.size()[1],-1)
         return obs
-
 
 # class TorchRNNModel(RecurrentNetwork, nn.Module):
 #     def __init__(

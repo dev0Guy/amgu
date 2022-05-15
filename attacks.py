@@ -2,6 +2,9 @@ import torch
 import torchattacks
 from torch import nn
 
+__all__ = ['Attacks']
+
+
 class Attacks(object):
 
     @classmethod
