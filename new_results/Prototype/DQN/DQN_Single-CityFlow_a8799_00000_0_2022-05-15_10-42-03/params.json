@@ -1,0 +1,15 @@
+{
+  "env": "Single-CityFlow",
+  "env_config": {
+    "config_path": "examples/hangzhou_1x1_bc-tyc_18041607_1h/config.json",
+    "reward_func": "waiting_count",
+    "steps_per_episode": 400
+  },
+  "evaluation_duration": 1,
+  "evaluation_interval": 4,
+  "framework": "torch",
+  "model": {
+    "custom_model": "Prototype"
+  },
+  "seed": 123
+}

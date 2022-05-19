@@ -1,0 +1,12 @@
+python3 main.py --max-iter 200 --model "CNN" --result-path "new_results/CNN"
+python3 main.py --max-iter 200 --model "Prototype" --result-path "new_results/Prototype"
+python3 main.py --max-iter 2000 --model "Queue" --result-path "new_results/Queue"
+
+
+python3 main.py --evaluation --model "Prototype"  --load-from "res/DQN/Final Prototype/checkpoint_000100/checkpoint-100"
+
+python3 main.py --attack --evaluation --model "CNN" --result-path "new_results/CNN" --load-from "new_results/CNN/DQN/DQN_Single-CityFlow_d0374_00000_0_2022-05-16_12-36-31/checkpoint_000200/checkpoint-200" --result-path "evaluation/CNN"
+
+
+
+python3 main.py --evaluation  --result-path "new_results/Prototype" --load-from "res/DQN/DQN_Single-CityFlow_ef9d0_00000_0_2022-05-16_16-33-37/checkpoint_000010/checkpoint-10" --result-path "evaluation/Prototype"

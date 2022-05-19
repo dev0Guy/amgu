@@ -13,7 +13,8 @@ import models
 import argparse
 import json
 import torch
-
+import ray
+ray.init(log_to_driver=False)
 # =============== CONST ===============
 ALGORITHM_MAPPER = {
     "A3C": AlgorithemsConfig.A3C,
@@ -30,8 +31,8 @@ parser.set_defaults(multi_agent=False)
 # share arguments
 parser.add_argument("--seed", type=int, default=123, help="RLLIB Seed.")
 parser.add_argument("--framework", choices=["tf", "tf2", "tfe", "torch"], default="torch", help="Choose NN Framework.")
-parser.add_argument("--evaluation-interval", type=int, default=4, help="How Many Train Evalation.")
-parser.add_argument("--evaluation-duration", type=int, default=1, help="How Many Evalation Episodes.")
+parser.add_argument("--evaluation-interval", type=int, default=4, help="How Many Train Evaluation.")
+parser.add_argument("--evaluation-duration", type=int, default=1, help="How Many Evaluation Episodes.")
 parser.add_argument('--lr', nargs='+', type=float, default=[0.9], help="Which LR To Run Expirent MULTI.")
 parser.add_argument("--config-path", type=str, default="examples/hangzhou_1x1_bc-tyc_18041607_1h/config.json", help="Path For Config File (cityflow).")
 parser.add_argument("--steps-per-episode", type=int, default=400, help="Number Of Step Before ENV Reset.")
@@ -73,6 +74,11 @@ print("With Actor:",args.algorithm)
 print("With Model:",args.model)
 print("With ENV:",config["env"])
 print("="*65)
+
+
+print("AMIT")
+print("Config", config)
+print("res:", args.result_path)
 
 tune.run(args.algorithm,config=config,local_dir=args.result_path,checkpoint_at_end=True,mode="min",
                 stop={

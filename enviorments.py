@@ -12,9 +12,11 @@ from utils import Rewards
 from collections import namedtuple
 from typing import Callable
 import logging
+import sys
 
 __all__ = ['SingleAgentCityFlow','SingleIntersection']
-COOLDOWN = 9
+COOLDOWN = 4
+
 logger = logging.getLogger(__name__)
 
 Preprocess = namedtuple("Preprocess", ["eng","road_mapper","state_shape", "intersections", "actionSpaceArray","action_impact", "intersectionNames", "summary"])
@@ -37,6 +39,10 @@ class _Wrapper():
         self.is_done: bool = False
         self.current_step: int = 0
         self.prev_action = None
+        self.count_zero_frames = 0
+        self.count_repeat_frames = 0
+        self.last_is_empty = False
+        # self.prev_reward = 0
     
     def _preprocess(self,config_path: str,channel_num = 4):
         """ Preprocess all data and pass all information for initial.
@@ -121,7 +127,6 @@ class _Wrapper():
         state_shape = (channel_num,len(intersections),(in_lane+out_lane),summary['division'])
         return Preprocess(eng, road_mapper, state_shape, intersections, actionSpaceArray,action_impact, intersectionNames, summary)
 
-
     def _activate_action(self,action):
         for i in range(len(self.intersectionNames)):
             tmp_action = action
@@ -129,6 +134,7 @@ class _Wrapper():
                 tmp_action =action[i] 
             self.eng.set_tl_phase(self.intersectionNames[i], tmp_action)
         self.eng.next_step()
+
 
     def _activate_cooldown(self):
         for i in range(len(self.intersectionNames)):
@@ -144,30 +150,50 @@ class _Wrapper():
         self._activate_action(action)
         if action != self.prev_action:
             self._activate_cooldown()
-            pass
         self.current_step += 1  
         self.prev_action = action
         #env step
         #observation
         self.observation = self._get_observation()
+        current_empty = len(self.eng.get_vehicles(include_waiting=True)) == 0
+        self.count_zero_frames = self.count_zero_frames + 1 if current_empty else 0
+        self.count_repeat_frames = self.count_repeat_frames + 1 if np.array_equal(self.observation[3],self.prev_waiting_state[3]) else 0
+        self.last_is_empty = current_empty
         #reward
-        self.reward = self._get_reward()
+        self.reward = self._get_reward() / len(self.intersections)
+        self.prev_waiting_state = self.observation
         #Detect if Simulation is finshed for done variable
         self.current_step += 1
-        self.is_done = (self.current_step >= self.steps_per_episode)
-        return self.observation, self.reward, self.is_done, {}
+        more_then_max = (self.current_step >= self.steps_per_episode)
+        is_repeat = (self.count_repeat_frames >= 2) 
+        finish_run = (self.count_zero_frames >= 15)
+        self.is_done = more_then_max or finish_run
+        if self.is_done:
+            self.reward += 100 if more_then_max else -100
+        return self.observation, self.reward , self.is_done, {}
         
     def _reset(self):
         self.eng.reset(seed=420)
         self.is_done = False
         self.current_step = 0
-        return self._get_observation()
+        self.count_repeat_frames = 0
+        self.count_zero_frames = 0
+        self.last_is_empty = False
+        self.observation = self._get_observation()
+        self.prev_waiting_state = self.observation
+        return self.observation
 
     def _render(self, mode: str):
         print(f'Current time: {self.eng.get_current_time()}')
 
     def _seed(self, seed: int):
         self.eng.set_random_seed(seed)
+
+    def get_results(self):
+        res_info = {}
+        res_info['ATT'] = self.eng.get_average_travel_time()
+        res_info['QL'] = list(self.eng.get_lane_vehicle_count().values())
+        return res_info
 
 class SingleAgentCityFlow(gym.Env,_Wrapper):
     """ One Agent ENV on Cityflow
@@ -219,15 +245,11 @@ class SingleAgentCityFlow(gym.Env,_Wrapper):
 
     def _get_reward(self):
         reward = 0
+
         for idx,name in enumerate(self.intersectionNames):
-            reward += self.reward_func(self.eng,self.observation[:,idx],self.road_mapper[name],self.summary)
+            reward += self.reward_func(self.eng,self.observation[:,idx],self.road_mapper[name],self.summary,self.intersections[name][1][0],self.intersections[name][1][1])
+        # self.prev_reward = self.prev_reward - reward
         return reward
-    
-    def get_results(self):
-        res_info = {}
-        res_info['ATT'] = self.eng.get_average_travel_time()
-        res_info['QL'] = self.eng.get_lane_vehicle_count().values()
-        return res_info   
 
     def seed(self, seed=420):
         self._seed(seed)

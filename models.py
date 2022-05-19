@@ -37,7 +37,7 @@ class _ModelWrapper(TorchModelV2, nn.Module):
     @override(ModelV2)
     def forward(self, input_dict: dict, state: list, seq_lens): 
         input = input_dict["obs"]
-        input = self._preprocess(input)
+        input = self._preprocess(input) if len(input.size()) >=5 else input 
         if type(input) is torch.Tensor:
             self._output = self._network(input)
         else:

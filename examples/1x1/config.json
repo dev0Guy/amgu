@@ -1,7 +1,7 @@
 {
     "interval": 1.0,
     "seed": 0,
-    "dir": "/Users/guyarieli/Documents/GitHub/Oran-TrafficManagement/examples/1x1/",
+    "dir": "/home/nadav/RICAPP/Oran-TrafficManagement/examples/1x1/",
     "roadnetFile": "roadnet.json",
     "flowFile": "flow.json",
     "rlTrafficLight": true,

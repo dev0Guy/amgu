@@ -2,11 +2,15 @@ import numpy as np
 
 class Rewards:
     @staticmethod
-    def waiting_count(eng,intersection_state,roads,summary):
-        waiting = eng.get_lane_waiting_vehicle_count()
+    def waiting_count(eng,intersection_state,roads,summary,in_lanes,out_lanes):
+        waiting = eng.get_lane_waiting_vehicle_count()  
+        running = eng.get_lane_vehicle_count()
         sum = 0
         for lane in roads:
-            sum += waiting[lane]
+            if lane in in_lanes:
+                sum +=  waiting[lane]
+            else: 
+                sum -= waiting[lane] + running[lane]
         return sum
     
     @staticmethod
