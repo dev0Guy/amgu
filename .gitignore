@@ -2,3 +2,5 @@
 **/abstract.egg-indo
 .history
 res
+**/env
+**/__pycache__
