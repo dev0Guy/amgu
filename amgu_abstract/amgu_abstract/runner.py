@@ -6,8 +6,8 @@ __all__ = ["RunnerWrapper"]
 
 class RunnerWrapper:
     """
-        Define Runner API,
-        Enable Shared API.
+    Define Runner API,
+    Enable Shared API.
     """
 
     def __init__(self, config, model, env, agent):

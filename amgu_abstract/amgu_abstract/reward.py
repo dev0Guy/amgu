@@ -5,8 +5,8 @@ __all__ = ["RewardWrapper"]
 
 class RewardWrapper:
     """
-        Define RewarD API,
-        Wrap Around Function And Enable Shared API.
+    Define RewarD API,
+    Wrap Around Function And Enable Shared API.
     """
 
     def __init__(self, env):

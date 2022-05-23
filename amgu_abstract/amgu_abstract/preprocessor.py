@@ -8,8 +8,8 @@ __all__ = ["Preprocessor"]
 
 class Preprocessor:
     """
-        Define Preprocessor API,
-        Wrap Around Function And Enable Shared API.
+    Define Preprocessor API,
+    Wrap Around Function And Enable Shared API.
     """
 
     def __init__(self, obs_space, options):

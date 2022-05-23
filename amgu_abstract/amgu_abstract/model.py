@@ -16,21 +16,21 @@ __all__ = ["TorchWrapper", "AlgorithmWrapper"]
 
 
 class TorchWrapper(TorchModelV2, nn.Module):
-    """ 
-            Wrapper, Around All Torch Models (weighted models).
-            Build On Top Of Model API, Easy To Gindrance & Expand.
-        """
+    """
+    Wrapper, Around All Torch Models (weighted models).
+    Build On Top Of Model API, Easy To Gindrance & Expand.
+    """
 
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         """Constructors
 
-            Args:
-                obs_space (gym.spaces): Space Of Observations.
-                action_space (gym.spaces): Space Of Actions.
-                num_outputs (int): How Many Outputs The Model Will Return.
-                model_config (dict): All Information To Build Model From.
-                name (str): Name Of Model To Acess.
-            """
+        Args:
+            obs_space (gym.spaces): Space Of Observations.
+            action_space (gym.spaces): Space Of Actions.
+            num_outputs (int): How Many Outputs The Model Will Return.
+            model_config (dict): All Information To Build Model From.
+            name (str): Name Of Model To Acess.
+        """
         TorchModelV2.__init__(
             self, obs_space, action_space, num_outputs, model_config, name
         )
@@ -50,13 +50,13 @@ class TorchWrapper(TorchModelV2, nn.Module):
     @override(TorchModelV2)
     def forward(self, input_dict, state, seq_lens):
         """Call on object, activate the model (a.k.a network).
-            Args:
-                input_dict (dict): dict with all inforamtion from env.
-                state (list):  list of last n state from env.
-                seq_lens (_type_): the length of state list.
-            Returns:
-                torch.Tensor: the state after activated by the network.
-            """
+        Args:
+            input_dict (dict): dict with all inforamtion from env.
+            state (list):  list of last n state from env.
+            seq_lens (_type_): the length of state list.
+        Returns:
+            torch.Tensor: the state after activated by the network.
+        """
         input = input_dict["obs"].float()
         assert self.network is not None
         self._output = self.network(input)
@@ -69,20 +69,20 @@ class TorchWrapper(TorchModelV2, nn.Module):
 
 
 class AlgorithmWrapper(object):
-    """ 
-        Wrapper, Around All Algorithem Models (No Weighted).
-        Build On Top Of Model API, Easy To Gindrance & Expand.
+    """
+    Wrapper, Around All Algorithem Models (No Weighted).
+    Build On Top Of Model API, Easy To Gindrance & Expand.
     """
 
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         """Constructors
 
-            Args:
-                obs_space (gym.spaces): Space Of Observations.
-                action_space (gym.spaces): Space Of Actions.
-                num_outputs (int): How Many Outputs The Model Will Return.
-                model_config (dict): All Information To Build Model From.
-                name (str): Name Of Model To Acess.
+        Args:
+            obs_space (gym.spaces): Space Of Observations.
+            action_space (gym.spaces): Space Of Actions.
+            num_outputs (int): How Many Outputs The Model Will Return.
+            model_config (dict): All Information To Build Model From.
+            name (str): Name Of Model To Acess.
         """
         assert type(obs_space) in [gym.spaces.box.Box, gym.spaces.Dict]
         assert type(action_space) in [

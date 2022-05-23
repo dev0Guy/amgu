@@ -4,7 +4,7 @@ __all__ = ["LaneQeueueLength", "Vanila"]
 
 
 def LaneQeueueLength(obs, waiting_cars_dim_idx):
-    """Transform The State To New One, 
+    """Transform The State To New One,
         Wich Include Queue Length For Eahc Lane.
 
     Args:

@@ -86,7 +86,9 @@ class CFWrapper:
     def _extract_information(self):
         """Return all information from env as Inforamtion object"""
         # _____ init data _____
-        action_impact: list = []  # for each intersection each light phase effect what lane
+        action_impact: list = (
+            []
+        )  # for each intersection each light phase effect what lane
         intersections: dict = {}
         road_mapper: dict = {}
         summary: dict = {
@@ -221,8 +223,8 @@ class CFWrapper:
             self.eng.next_step()
 
     def step_information(self, action: np.array):
-        """ Activate Step In Env,
-            Extract all 
+        """Activate Step In Env,
+            Extract all
             Have to be activate before each step
 
         Args:

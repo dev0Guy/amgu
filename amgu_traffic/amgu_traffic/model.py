@@ -20,12 +20,12 @@ class CNN(TorchWrapper):
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         """Constructors
 
-            Args:
-                obs_space (gym.spaces): Space Of Observations.
-                action_space (gym.spaces): Space Of Actions.
-                num_outputs (int): How Many Outputs The Model Will Return.
-                model_config (dict): All Information To Build Model From.
-                name (str): Name Of Model To Acess.
+        Args:
+            obs_space (gym.spaces): Space Of Observations.
+            action_space (gym.spaces): Space Of Actions.
+            num_outputs (int): How Many Outputs The Model Will Return.
+            model_config (dict): All Information To Build Model From.
+            name (str): Name Of Model To Acess.
         """
         super().__init__(obs_space, action_space, num_outputs, model_config, name)
         self.network: nn.Sequential = nn.Sequential(
