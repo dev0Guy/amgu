@@ -1,4 +1,4 @@
-<img src="amgu.png" width="100">
+<center><img src="amgu.png" height="50"><center>
 
 # Aesthetic ASCII
 
