@@ -250,10 +250,14 @@ class CFWrapper():
                     norm_speed = speed / self.summary['maxSpeed']
                     state[0,row,col,division_idx] = norm_speed
                     state[1,row,col,division_idx] = int(distance%division_size) / division_size
-                    state[3,row,col,division_idx] = norm_speed == 0
+                    state[3,row,col,division_idx] = (norm_speed == 0)
                     if leader_id:
                         leader_distance = info['vehicle_distance'][vehicle_id]
                         state[2,row,col,division_idx] = (leader_distance - distance) / self.summary['size']              
+        state = state * 255
+        print("#"*50)
+        print(np.max(state))
+        print("#"*50)
         return self.preprocess.transform(state) if self.preprocess else state
 
 class MultiDiscreteCF(CFWrapper,gym.Env):

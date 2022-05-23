@@ -1,4 +1,4 @@
-from amgu.premade.cityflow import  DiscreteCF,AvgWaitingTime,CNN,RayRunner,vanila
+from amgu.premade.cityflow import  DiscreteCF,AvgWaitingTime,CNN,RayRunner,Vanila
 
 
 config = {
@@ -29,10 +29,10 @@ config = {
             'hidden_size': 10,
         }
     },
-    'run_from': '/Users/guyarieli/Documents/GitHub/amgu/',
+    'run_from': '/Users/guyarieli/Documents/GitHub/amgu/amgu/',
     'env' : 'custom_env',
 }
-preprocess_dict = {'func': vanila,'argument_list':[]}
+preprocess_dict = {'func': Vanila,'argument_list':[]}
 env_func = lambda _: DiscreteCF(config['env_config'],AvgWaitingTime,preprocess_dict)
 runner = RayRunner(config,CNN,env_func,'DQN')
 runner.train()
