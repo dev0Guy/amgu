@@ -4,6 +4,7 @@ from abstract import RewardWrapper
 __all__ = ['QeueueLength','DeltaQeueueLength','AvgWaitingTime']
 
 class QeueueLength(RewardWrapper):
+    """Reward Class, Calculate The Sum Of Waiting Cars."""
     def __init__(self,env):
         super().__init__(env)
 
@@ -12,6 +13,7 @@ class QeueueLength(RewardWrapper):
         return sum(waiting_in_lanes)
 
 class DeltaQeueueLength(RewardWrapper):
+    """Reward Class, Calculate The Delta Of Waiting Cars & Driving Cars"""
     def __init__(self,env):
         super().__init__(env)
     
@@ -21,11 +23,13 @@ class DeltaQeueueLength(RewardWrapper):
         return sum(waiting_in_lanes) - sum(running_in_lanes)
 
 class AvgWaitingTime(RewardWrapper):
+    """Reward Class, Calculate The Sum Of Waiting Cars."""
+
     def __init__(self,env):
         super().__init__(env)
         self.v_current_intersection = dict()
         self.awaiting_current_intersection = dict()
-        
+
     def get(self,observation):
         vehicles = list(self.env.eng.get_lane_vehicles().values())
         vehicles = list(chain(*vehicles))

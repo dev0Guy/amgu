@@ -1,10 +1,19 @@
 import numpy as np
 
-__all__ = ['lane_length','vanila']
+__all__ = ['LaneQeueueLength','Vanila']
 
 
-def lane_length(obs,waiting_cars_dim_idx):
+def LaneQeueueLength(obs,waiting_cars_dim_idx):
+    """Transform The State To New One, 
+        Wich Include Queue Length For Eahc Lane.
 
+    Args:
+        obs (np.ndarray): Env Observation.
+        waiting_cars_dim_idx (int): Observation Dim Of Waiting Cars (Binary).
+
+    Returns:
+        np.ndarray: Transformed Observation
+    """
     assert waiting_cars_dim_idx < len(obs.shape)
     
     waiting_cars_val = obs[waiting_cars_dim_idx]
@@ -15,5 +24,12 @@ def lane_length(obs,waiting_cars_dim_idx):
     
     return np.count_nonzero(waiting_cars_val,axis=-1)
 
-def vanila(obs): 
+def Vanila(obs): 
+    """Transform The State To The Same One.
+    Args:
+        obs (np.ndarray): Env Observation.
+
+    Returns:
+        np.ndarray: Same Observation
+    """
     return obs

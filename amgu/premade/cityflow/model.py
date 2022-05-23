@@ -9,7 +9,21 @@ torch, nn = try_import_torch()
 __all__ = ['CNN','FCN','Qeueue','Random']
 
 class CNN(TorchWrapper):
-    def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
+    """Convolutional Neural Network
+
+    Args:
+        TorchWrapper: Weighted Model
+    """
+    def __init__(self, obs_space, action_space, num_outputs, model_config, name):
+        """Constructors
+
+            Args:
+                obs_space (gym.spaces): Space Of Observations.
+                action_space (gym.spaces): Space Of Actions.
+                num_outputs (int): How Many Outputs The Model Will Return.
+                model_config (dict): All Information To Build Model From.
+                name (str): Name Of Model To Acess.
+        """
         super().__init__(obs_space, action_space, num_outputs,model_config, name)
         self.network: nn.Sequential = nn.Sequential(
             nn.Conv3d(in_channels=obs_space.shape[0],out_channels=100,kernel_size=(1,32,1),stride=(1, 32, 1)),
@@ -28,6 +42,10 @@ class CNN(TorchWrapper):
 
 
 class FCN(TorchWrapper):
+    """Fully Connected. Hidden Later Modeiffyable Throw Config.
+    Args:
+        TorchWrapper: Weighted Model
+    """
     def __init__(self, obs_space: gym.spaces, action_space: gym.spaces, num_outputs: int, model_config: dict, name: str):
         super().__init__(obs_space, action_space, num_outputs,model_config, name)
         assert 'intersection_num' in self.model_config
@@ -44,6 +62,11 @@ class FCN(TorchWrapper):
 
 
 class Qeueue(AlgorithmWrapper):
+    """Algorithem Choose Action Witch Decrese Lane Qeueue The Modst.
+
+    Args:
+        AlgorithmWrapper : None Weighted Model
+    """
     def __init__(self,action_impact:list):
         if not action_impact:
             raise Warning('Action Impact Cant be None')
@@ -70,6 +93,11 @@ class Qeueue(AlgorithmWrapper):
 
 
 class Random(AlgorithmWrapper):
+    """Algorithem Choose Action Randomly.
+
+    Args:
+        AlgorithmWrapper : None Weighted Model
+    """
     def __init__(self,action_impact:list):
         if not action_impact:
             raise Warning('Action Impact Cant be None')
