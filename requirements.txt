@@ -33,7 +33,7 @@ googleapis-common-protos==1.56.0
 gpustat==1.0.0b1
 GPUtil==1.4.0
 grpcio==1.43.0
-guam==0.1.2
+guam==*
 gym==0.21.0
 h5py==3.6.0
 hiredis==2.0.0
