@@ -33,13 +33,17 @@
 <!-- ABOUT THE PROJECT -->
 ## About Amgu
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
 The majority of paper in the subject of DRL & traffic mannagment don't share thier code or the 
 data they used for train.
 There is an need to organize & create uniforms between paper &code a like.
 Amgu try to execly do that, creating abstract classes that can be hierarchical from
 and be easy to use and prevent cooled start. Traffic Managment System (including agent) has been created using thoes classes.Amgu-Traffic enable developer to use easy API with custom & premade
 model and envierments.
+
+<p align="center">
+  <img src="assets/cityflow.jpeg" height="150" />
+</p>
+
 
 ### Built With
 
