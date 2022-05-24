@@ -58,8 +58,7 @@ In Addition ray should be installed custom to your machine(x86/x64).
 
 ### Installation
 
-_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
-
+Bellow example show the step to install and run example of Amgu.
 1. Install Amgu Abstract using Pypi.
   ```sh
       pip install amgu/amgu_abstract/.
@@ -113,5 +112,19 @@ _Below is an example of how you can instruct your audience on installing and set
       runner.train()
 
    ```
+
+<!-- ROADMAP -->
+## Roadmap
+- [x] Abstract Class.
+- [x] Traffic Class (using cityflow).
+- [ ] Add Documntation.
+- [ ] Build Test
+
+See the [open issues](https://github.com/dev0Guy/amgu/issues) for a full list of proposed features (and known issues).
+
+<!-- LICENSE -->
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
