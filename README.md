@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/amgu.png" height="100" />
+  <img src="assets/amgu.png" height="150" />
 </p>
 
 [![Lint](https://github.com/dev0Guy/amgu/actions/workflows/black.yml/badge.svg?event=push)](https://github.com/dev0Guy/amgu/actions/workflows/black.yml)
