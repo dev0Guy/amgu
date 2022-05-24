@@ -54,30 +54,64 @@ Amgu has been built using, the following:
 ## Getting Started
 
 To use this project you'll need to have CityFlow already install inside your pip enviorment.
-In Addition ray should be installed custom to your machine(x86/M1).
-
-# TODO: add Code example
-
-### Prerequisites
-
-# TODO: show how to install ray & city Flow
+In Addition ray should be installed custom to your machine(x86/x64).
 
 ### Installation
 
 _Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+1. Install Amgu Abstract using Pypi.
+  ```sh
+      pip install amgu/amgu_abstract/.
    ```
-3. Install NPM packages
+2. Install Amgu Traffic using Pypi.
    ```sh
-   npm install
+      pip install amgu/amgu_traffic/.
    ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
+3. Import to your project.
+   ```python
+    import amgu_abstract
+    import amgu_traffic
+   ```
+4. Use in your code.
+   ```python
+      from amgu_traffic import DiscreteCF, AvgWaitingTime, CNN, RayRunner, Vanila
+      config = {
+          "env_config": {
+              "config_path": "examples/hangzhou_1x1_bc-tyc_18041607_1h/config.json",
+              "steps_per_episode": 100,
+              "res_path": "res/",
+          },
+          "stop": {"training_iteration": 5},
+          "res_path": "res/",
+          "framework": "torch",
+          "seed": 123,
+          "evaluation_interval": 10,
+          "evaluation_duration": 5,
+          "exploration_config": {
+              "type": "EpsilonGreedy",
+              "epsilon_schedule": {
+                  "type": "ExponentialSchedule",
+                  "initial_p": 1,
+                  "schedule_timesteps": 100 // 5,
+                  "decay_rate": 0.99,
+              },
+          },
+          "model": {
+              "custom_model": "new_models",
+              "custom_model_config": {
+                  "intersection_num": 1,
+                  "hidden_size": 10,
+              },
+          },
+          "run_from": "/Users/guyarieli/Documents/GitHub/amgu/amgu/",
+          "env": "custom_env",
+      }
+      preprocess_dict = {"func": Vanila, "argument_list": []}
+      env_func = lambda _: DiscreteCF(config["env_config"], AvgWaitingTime, preprocess_dict)
+      runner = RayRunner(config, CNN, env_func, "DQN")
+      runner.train()
+
    ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
