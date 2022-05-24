@@ -1,5 +1,6 @@
 **/build
-**/abstract.egg-indo
+**/*.egg-indo
+**/build
 .history
 res
 **/env
