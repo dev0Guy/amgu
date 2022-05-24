@@ -45,8 +45,9 @@ model and envierments.
 
 This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
 
-* [Python](https://nextjs.org/)
-* [Cityflow](https://reactjs.org/)
-* [Ray-rllib](https://vuejs.org/)
+* [Python](https://www.python.org/)
+* [PyPi](https://pypi.org/)
+* [Cityflow](https://github.com/cityflow-project/CityFlow)
+* [Ray-rllib](https://github.com/ray-project/ray/blob/master/python/ray/rllib)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
