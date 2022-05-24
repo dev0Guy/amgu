@@ -1,6 +1,7 @@
 **/build
 **/*.egg-info
 **/build
+/examples/*
 .history
 res
 **/env
