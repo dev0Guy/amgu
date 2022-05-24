@@ -1,5 +1,5 @@
 **/build
-**/*.egg-indo
+**/*.egg-info
 **/build
 .history
 res
