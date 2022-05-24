@@ -57,7 +57,7 @@ class CFWrapper:
         print(self.cfg_path)
         print("=" * 50)
 
-        self.chl_num = config.get("channel_num", 4)
+        self.chl_num = config.get("channel_num", 3)
         self.cooldown = config.get("cooldown", 6)
         self.information = self._extract_information()
         self.reward_func = reward_class(self).get
@@ -329,12 +329,12 @@ class CFWrapper:
                     state[1, row, col, division_idx] = (
                         int(distance % division_size) / division_size
                     )
-                    state[3, row, col, division_idx] = norm_speed == 0
-                    if leader_id:
-                        leader_distance = info["vehicle_distance"][vehicle_id]
-                        state[2, row, col, division_idx] = (
-                            leader_distance - distance
-                        ) / self.summary["size"]
+                    state[2, row, col, division_idx] = norm_speed == 0
+                    # if leader_id:
+                    #     leader_distance = info["vehicle_distance"][vehicle_id]
+                    #     state[2, row, col, division_idx] = (
+                    #         leader_distance - distance
+                    #     ) / self.summary["size"]
         state = state * 255
         print("#" * 50)
         print(np.max(state))
