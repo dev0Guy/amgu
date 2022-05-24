@@ -41,7 +41,7 @@ and be easy to use and prevent cooled start. Traffic Managment System (including
 model and envierments.
 
 <p align="center">
-  <img src="assets/cityflow.jpeg" height="150" />
+  <img src="assets/cityflow.gif" height="150" />
 </p>
 
 
