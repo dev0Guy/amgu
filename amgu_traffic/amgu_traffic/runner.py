@@ -1,4 +1,4 @@
-from .enviorment import CFWrapper
+from .environment import CFWrapper
 from amgu_abstract import RunnerWrapper
 import os
 from ray.rllib.utils.framework import try_import_torch
