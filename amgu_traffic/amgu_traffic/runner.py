@@ -84,7 +84,7 @@ class RayRunner(RunnerWrapper):
 
         information_dict = {"rewards": [], "ATT": [], "QL": []}
         dir_path = os.path.join(self.res_path, "Images")
-        
+
         # remvove if file exist
         if os.path.exists(dir_path):
             shutil.rmtree(dir_path)
@@ -96,7 +96,7 @@ class RayRunner(RunnerWrapper):
             obs_tensor = torch.from_numpy(obs_np)[None, :].float()
             obs_img = self._convert_to_image(obs_np)
             size = obs_img.shape if size == None else size
-            cv2.imwrite(os.path.join(dir_path,f"{idx}.png"),obs_img)
+            cv2.imwrite(os.path.join(dir_path, f"{idx}.png"), obs_img)
             if action_np is np.array:
                 action_tensor = torch.reshape(action_np, (len(action_np), -1))
                 action_tensor = torch.argmax(action_tensor, dim=1)
@@ -108,28 +108,32 @@ class RayRunner(RunnerWrapper):
             res_info = env.get_results()
             information_dict["ATT"].append(res_info["ATT"])
             information_dict["QL"].append(res_info["QL"])
-            idx+=1
+            idx += 1
         assert size is not None
-        self._save_gif(dir_path,size[:-1])
+        self._save_gif(dir_path, size[:-1])
 
-    def _convert_to_image(self,obs_np):
+    def _convert_to_image(self, obs_np):
         assert type(obs_np) is np.ndarray
         intersection_num = obs_np.shape[1]
-        new_shape = (obs_np.shape[0],intersection_num*obs_np.shape[2],intersection_num*obs_np.shape[3])
-        return np.reshape(obs_np,new_shape).T.astype(np.uint8)
-    
-    def _save_gif(self,path,frame_size,fps=1.0):
-        images_path =  glob.glob(f'{path}/*.png')
-        with imageio.get_writer(f'{path}/movie.gif', mode='I') as writer:
-                for filename in images_path:
-                    image = imageio.imread(filename)
-                    writer.append_data(image)
-        
+        new_shape = (
+            obs_np.shape[0],
+            intersection_num * obs_np.shape[2],
+            intersection_num * obs_np.shape[3],
+        )
+        return np.reshape(obs_np, new_shape).T.astype(np.uint8)
+
+    def _save_gif(self, path, frame_size, fps=1.0):
+        images_path = glob.glob(f"{path}/*.png")
+        with imageio.get_writer(f"{path}/movie.gif", mode="I") as writer:
+            for filename in images_path:
+                image = imageio.imread(filename)
+                writer.append_data(image)
+
         # frame = cv2.imread(images_path[0])
-        # height, width, layers = frame.shape  
-        # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  
-        # video = cv2.VideoWriter('{path}/video.mp4', fourcc,fps, (width, height)) 
+        # height, width, layers = frame.shape
+        # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        # video = cv2.VideoWriter('{path}/video.mp4', fourcc,fps, (width, height))
         # for filename in images_path:
-        #     video.write(cv2.imread(filename)) 
-        # cv2.destroyAllWindows() 
+        #     video.write(cv2.imread(filename))
+        # cv2.destroyAllWindows()
         # video.release()
