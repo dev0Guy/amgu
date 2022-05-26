@@ -1,15 +1,19 @@
+import glob
 import numpy as np
 from .enviorment import CFWrapper
 from amgu_abstract import RunnerWrapper
 import os
+import shutil
 from ray.rllib.utils.framework import try_import_torch
 from ray.tune.registry import register_env
 from ray.rllib.models.catalog import ModelCatalog
 import ray.rllib.agents.ppo as ppo
 import ray.rllib.agents.a3c as a3c
 import ray.rllib.agents.dqn as dqn
-
+import cv2
 import ray
+import imageio
+
 
 torch, nn = try_import_torch()
 
@@ -22,7 +26,6 @@ class RayRunner(RunnerWrapper):
     _instance = {"A3C": a3c.A2CTrainer, "PPO": ppo.PPOTrainer, "DQN": dqn.DQNTrainer}
 
     def __init__(self, config: dict, model, env_func: CFWrapper, agent: str):
-        # env = env_func(config['env_config'])
         super().__init__(config, model, None, agent)
         assert type(agent) is str
         assert agent in self._options
@@ -80,10 +83,20 @@ class RayRunner(RunnerWrapper):
         obs_np = env.reset()
 
         information_dict = {"rewards": [], "ATT": [], "QL": []}
-
+        dir_path = os.path.join(self.res_path, "Images")
+        
+        # remvove if file exist
+        if os.path.exists(dir_path):
+            shutil.rmtree(dir_path)
+        os.mkdir(dir_path)
+        idx = 0
+        size = None
         while not done:
             action_np = agent_instance.compute_single_action(obs_np)
             obs_tensor = torch.from_numpy(obs_np)[None, :].float()
+            obs_img = self._convert_to_image(obs_np)
+            size = obs_img.shape if size == None else size
+            cv2.imwrite(os.path.join(dir_path,f"{idx}.png"),obs_img)
             if action_np is np.array:
                 action_tensor = torch.reshape(action_np, (len(action_np), -1))
                 action_tensor = torch.argmax(action_tensor, dim=1)
@@ -95,3 +108,28 @@ class RayRunner(RunnerWrapper):
             res_info = env.get_results()
             information_dict["ATT"].append(res_info["ATT"])
             information_dict["QL"].append(res_info["QL"])
+            idx+=1
+        assert size is not None
+        self._save_gif(dir_path,size[:-1])
+
+    def _convert_to_image(self,obs_np):
+        assert type(obs_np) is np.ndarray
+        intersection_num = obs_np.shape[1]
+        new_shape = (obs_np.shape[0],intersection_num*obs_np.shape[2],intersection_num*obs_np.shape[3])
+        return np.reshape(obs_np,new_shape).T.astype(np.uint8)
+    
+    def _save_gif(self,path,frame_size,fps=1.0):
+        images_path =  glob.glob(f'{path}/*.png')
+        with imageio.get_writer(f'{path}/movie.gif', mode='I') as writer:
+                for filename in images_path:
+                    image = imageio.imread(filename)
+                    writer.append_data(image)
+        
+        # frame = cv2.imread(images_path[0])
+        # height, width, layers = frame.shape  
+        # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  
+        # video = cv2.VideoWriter('{path}/video.mp4', fourcc,fps, (width, height)) 
+        # for filename in images_path:
+        #     video.write(cv2.imread(filename)) 
+        # cv2.destroyAllWindows() 
+        # video.release()

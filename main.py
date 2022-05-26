@@ -6,10 +6,10 @@ agent_name = "DQN"
 config = {
     "env_config": {
         "config_path": "examples/hangzhou_1x1_bc-tyc_18041607_1h/config.json",
-        "steps_per_episode": 100,
+        "steps_per_episode": 500,
         "res_path": f"res/res_{agent_name}/",
     },
-    "stop": {"training_iteration": 5},
+    "stop": {"training_iteration": 3},
     "res_path": f"res/res_{agent_name}/",
     "framework": "torch",
     "seed": 123,

@@ -107,7 +107,7 @@ class CFWrapper:
         config["roadnetFile"] = roadnet_path
         config["flowFile"] = flow_path
         config["roadnetLogFile"] = os.path.join(self.res_path, "roadnet.json")
-        config["replayLogFile"] = os.path.join(self.res_path, "replay.json")
+        config["replayLogFile"] = os.path.join(self.res_path, "replay.txt")
         config_path = os.path.join(self.sub_folder, "config_copy.json")
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
