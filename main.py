@@ -1,13 +1,16 @@
 from amgu_traffic import DiscreteCF, AvgWaitingTime, CNN, RayRunner, Vanila
 
+agent_name = "DQN"
+
+
 config = {
     "env_config": {
         "config_path": "examples/hangzhou_1x1_bc-tyc_18041607_1h/config.json",
         "steps_per_episode": 100,
-        "res_path": "res/",
+        "res_path": f"res/res_{agent_name}/",
     },
     "stop": {"training_iteration": 5},
-    "res_path": "res/",
+    "res_path": f"res/res_{agent_name}/",
     "framework": "torch",
     "seed": 123,
     "evaluation_interval": 10,
@@ -33,8 +36,6 @@ config = {
 }
 preprocess_dict = {"func": Vanila, "argument_list": []}
 env_func = lambda _: DiscreteCF(config["env_config"], AvgWaitingTime, preprocess_dict)
-runner = RayRunner(config, CNN, env_func, "DQN")
+runner = RayRunner(config, CNN, env_func, agent_name)
 runner.train()
 runner.eval()
-# runner.eval(weight_path="res/DQN/DQN_custom_env_a8d67_00000_0_2022-05-26_10-58-42/checkpoint_000005/checkpoint-5")
-# print("-=="*20)
