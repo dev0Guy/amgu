@@ -7,7 +7,7 @@ config = {
     "env_config": {
         "config_path": "examples/hangzhou_1x1_bc-tyc_18041607_1h/config.json",
         "steps_per_episode": 500,
-        "res_path": f"res/res_{agent_name}/",
+        "save_path": f"res/res_{agent_name}/",
     },
     "stop": {"training_iteration": 3},
     "res_path": f"res/res_{agent_name}/",
@@ -35,6 +35,7 @@ config = {
     "env": "custom_env",
 }
 preprocess_dict = {"func": Vanila, "argument_list": []}
+print(config["env_config"])
 env_func = lambda _: DiscreteCF(config["env_config"], AvgWaitingTime, preprocess_dict)
 runner = RayRunner(config, CNN, env_func, agent_name)
 runner.train()

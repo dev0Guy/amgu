@@ -35,7 +35,7 @@ class CFWrapper:
         # Asserts
         assert "steps_per_episode" in config
         assert "config_path" in config
-        assert "res_path" in config
+        assert "save_path" in config
         # assert 'channel_num' in config
         # assert 'cooldown' in config
         assert issubclass(reward_class, RewardWrapper)
@@ -47,16 +47,12 @@ class CFWrapper:
         assert isinstance(preprocess_dict["func"], types.FunctionType)
         # get information from config
         self.eps_num_steps = config["steps_per_episode"]
-        self.res_path = config["res_path"]
+        self.res_path = config["save_path"]
         file_name = config["config_path"].split("/")[-1]
         idx_last = config["config_path"].rindex(file_name)
         assert idx_last != -1
         self.sub_folder = config["config_path"][:idx_last]
         self.cfg_path = config["config_path"]
-        print("=" * 50)
-        print(self.cfg_path)
-        print("=" * 50)
-
         self.chl_num = config.get("channel_num", 3)
         self.cooldown = config.get("cooldown", 6)
         self.information = self._extract_information()
