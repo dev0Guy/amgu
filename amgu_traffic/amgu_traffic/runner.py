@@ -1,6 +1,6 @@
 import glob
 import numpy as np
-from .enviorment import CFWrapper
+from .environment import CFWrapper
 from amgu_abstract import RunnerWrapper
 import os
 import shutil
