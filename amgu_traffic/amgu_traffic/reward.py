@@ -4,7 +4,7 @@ from amgu_abstract import RewardWrapper
 __all__ = ["QeueueLength", "DeltaQeueueLength", "AvgWaitingTime"]
 
 
-class QeueueLength(RewardWrapper):
+class QueueLength(RewardWrapper):
     """Reward Class, Calculate The Sum Of Waiting Cars."""
 
     def __init__(self, env):
