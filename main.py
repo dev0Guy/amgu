@@ -35,3 +35,6 @@ preprocess_dict = {"func": Vanila, "argument_list": []}
 env_func = lambda _: DiscreteCF(config["env_config"], AvgWaitingTime, preprocess_dict)
 runner = RayRunner(config, CNN, env_func, "DQN")
 runner.train()
+runner.eval()
+# runner.eval(weight_path="res/DQN/DQN_custom_env_a8d67_00000_0_2022-05-26_10-58-42/checkpoint_000005/checkpoint-5")
+# print("-=="*20)

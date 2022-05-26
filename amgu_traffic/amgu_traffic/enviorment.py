@@ -336,10 +336,13 @@ class CFWrapper:
                     #         leader_distance - distance
                     #     ) / self.summary["size"]
         state = state * 255
-        print("#" * 50)
-        print(np.max(state))
-        print("#" * 50)
         return self.preprocess.transform(state) if self.preprocess else state
+
+    def get_results(self):
+        return {
+            "ATT": self.get_att(),
+            "QL": self.get_ql(),
+        }
 
 
 class MultiDiscreteCF(CFWrapper, gym.Env):
