@@ -39,4 +39,3 @@ env_func = lambda _: DiscreteCF(config["env_config"], AvgWaitingTime, preprocess
 runner = RayRunner(config, CNN, env_func, agent_name)
 runner.train()
 runner.eval()
-

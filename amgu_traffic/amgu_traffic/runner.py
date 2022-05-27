@@ -22,6 +22,7 @@ torch, nn = try_import_torch()
 __all__ = ["RayRunner"]
 WINDOW_SIZE = 50
 
+
 class RayRunner(RunnerWrapper):
 
     _options = ["DQN", "PPO", "A3C"]
@@ -110,22 +111,26 @@ class RayRunner(RunnerWrapper):
             res_info = env.get_results()
             information_dict["ATT"].append(res_info["ATT"])
             information_dict["QL"].append(res_info["QL"])
-            
+
             gs = gridspec.GridSpec(4, 3)
             gs.update(wspace=0.5)
-            ax1 = plt.subplot(gs[:3, :3], )
-            ax2 = plt.subplot(gs[3,0])
-            ax3 = plt.subplot(gs[3,1])
-            ax4 = plt.subplot(gs[3,2])
-            _from = idx-WINDOW_SIZE if idx >= WINDOW_SIZE else 0
+            ax1 = plt.subplot(
+                gs[:3, :3],
+            )
+            ax2 = plt.subplot(gs[3, 0])
+            ax3 = plt.subplot(gs[3, 1])
+            ax4 = plt.subplot(gs[3, 2])
+            _from = idx - WINDOW_SIZE if idx >= WINDOW_SIZE else 0
             _to = len(information_dict["ATT"])
-            x_axis = [i for i in range(_from,_to)]
+            x_axis = [i for i in range(_from, _to)]
             ax1.imshow(obs_img)
-            ax2.plot(x_axis,information_dict["ATT"][_from:],color='forestgreen')
+            ax2.plot(x_axis, information_dict["ATT"][_from:], color="forestgreen")
             ax2.set_title("ATT")
-            ax3.bar([i for i in range(len(res_info["QL"]))],res_info["QL"],color='coral')
+            ax3.bar(
+                [i for i in range(len(res_info["QL"]))], res_info["QL"], color="coral"
+            )
             ax3.set_title("QL")
-            ax4.plot(x_axis,information_dict["rewards"][_from:],color='teal')
+            ax4.plot(x_axis, information_dict["rewards"][_from:], color="teal")
             ax4.set_title("Rewards")
             plt.savefig(os.path.join(dir_path, f"{idx}.png"))
             idx += 1
@@ -144,16 +149,23 @@ class RayRunner(RunnerWrapper):
 
     def _save_gif(self, path, frame_size):
         def cmp_func(item1, item2):
-            item1 = item1.replace(f"{path}/","")
-            item2 = item2.replace(f"{path}/","")
-            item1 = item1.replace(".png","")
-            item2 = item2.replace(".png","")
+            item1 = item1.replace(f"{path}/", "")
+            item2 = item2.replace(f"{path}/", "")
+            item1 = item1.replace(".png", "")
+            item2 = item2.replace(".png", "")
             item1 = int(item1)
             item2 = int(item2)
             return item1 - item2
+
         images_path = glob.glob(f"{path}/*.png")
-        file_path =f"{path}/movie.gif"
-        imgs = (Image.open(f) for f in sorted(images_path,key=cmp_to_key(cmp_func)))
+        file_path = f"{path}/movie.gif"
+        imgs = (Image.open(f) for f in sorted(images_path, key=cmp_to_key(cmp_func)))
         img = next(imgs)  # extract first image from iterator
-        img.save(fp=file_path, format='GIF', append_images=imgs,
-                save_all=True, duration=100, loop=0)
+        img.save(
+            fp=file_path,
+            format="GIF",
+            append_images=imgs,
+            save_all=True,
+            duration=100,
+            loop=0,
+        )
