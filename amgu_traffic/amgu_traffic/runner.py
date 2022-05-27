@@ -10,15 +10,17 @@ from ray.rllib.models.catalog import ModelCatalog
 import ray.rllib.agents.ppo as ppo
 import ray.rllib.agents.a3c as a3c
 import ray.rllib.agents.dqn as dqn
-import cv2
 import ray
-import imageio
+from functools import cmp_to_key
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 
 torch, nn = try_import_torch()
 
 __all__ = ["RayRunner"]
-
+WINDOW_SIZE = 50
 
 class RayRunner(RunnerWrapper):
 
@@ -76,7 +78,6 @@ class RayRunner(RunnerWrapper):
             weight_path = self.last_checkpoint
         agent_instance = self._instance[self.agent](config=self.config)
         agent_instance.restore(weight_path)
-
         env = self.env_func(self.config["env"])
 
         done = False
@@ -91,12 +92,13 @@ class RayRunner(RunnerWrapper):
         os.mkdir(dir_path)
         idx = 0
         size = None
+        plt.figure(figsize=(10, 13), dpi=80)
         while not done:
             action_np = agent_instance.compute_single_action(obs_np)
             obs_tensor = torch.from_numpy(obs_np)[None, :].float()
             obs_img = self._convert_to_image(obs_np)
             size = obs_img.shape if size == None else size
-            cv2.imwrite(os.path.join(dir_path, f"{idx}.png"), obs_img)
+            # cv2.imwrite(os.path.join(dir_path, f"{idx}.png"), obs_img)
             if action_np is np.array:
                 action_tensor = torch.reshape(action_np, (len(action_np), -1))
                 action_tensor = torch.argmax(action_tensor, dim=1)
@@ -108,6 +110,24 @@ class RayRunner(RunnerWrapper):
             res_info = env.get_results()
             information_dict["ATT"].append(res_info["ATT"])
             information_dict["QL"].append(res_info["QL"])
+            
+            gs = gridspec.GridSpec(4, 3)
+            gs.update(wspace=0.5)
+            ax1 = plt.subplot(gs[:3, :3], )
+            ax2 = plt.subplot(gs[3,0])
+            ax3 = plt.subplot(gs[3,1])
+            ax4 = plt.subplot(gs[3,2])
+            _from = idx-WINDOW_SIZE if idx >= WINDOW_SIZE else 0
+            _to = len(information_dict["ATT"])
+            x_axis = [i for i in range(_from,_to)]
+            ax1.imshow(obs_img)
+            ax2.plot(x_axis,information_dict["ATT"][_from:],color='forestgreen')
+            ax2.set_title("ATT")
+            ax3.bar([i for i in range(len(res_info["QL"]))],res_info["QL"],color='coral')
+            ax3.set_title("QL")
+            ax4.plot(x_axis,information_dict["rewards"][_from:],color='teal')
+            ax4.set_title("Rewards")
+            plt.savefig(os.path.join(dir_path, f"{idx}.png"))
             idx += 1
         assert size is not None
         self._save_gif(dir_path, size[:-1])
@@ -122,18 +142,18 @@ class RayRunner(RunnerWrapper):
         )
         return np.reshape(obs_np, new_shape).T.astype(np.uint8)
 
-    def _save_gif(self, path, frame_size, fps=1.0):
+    def _save_gif(self, path, frame_size):
+        def cmp_func(item1, item2):
+            item1 = item1.replace(f"{path}/","")
+            item2 = item2.replace(f"{path}/","")
+            item1 = item1.replace(".png","")
+            item2 = item2.replace(".png","")
+            item1 = int(item1)
+            item2 = int(item2)
+            return item1 - item2
         images_path = glob.glob(f"{path}/*.png")
-        with imageio.get_writer(f"{path}/movie.gif", mode="I") as writer:
-            for filename in images_path:
-                image = imageio.imread(filename)
-                writer.append_data(image)
-
-        # frame = cv2.imread(images_path[0])
-        # height, width, layers = frame.shape
-        # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        # video = cv2.VideoWriter('{path}/video.mp4', fourcc,fps, (width, height))
-        # for filename in images_path:
-        #     video.write(cv2.imread(filename))
-        # cv2.destroyAllWindows()
-        # video.release()
+        file_path =f"{path}/movie.gif"
+        imgs = (Image.open(f) for f in sorted(images_path,key=cmp_to_key(cmp_func)))
+        img = next(imgs)  # extract first image from iterator
+        img.save(fp=file_path, format='GIF', append_images=imgs,
+                save_all=True, duration=100, loop=0)
