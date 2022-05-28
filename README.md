@@ -122,7 +122,7 @@ Bellow example show the step to install and run example of Amgu.
 ## Roadmap
 - [x] Abstract Class.
 - [x] Traffic Class (using cityflow).
-- [ ] Add Documntation.
+- [x] Add Documntation.
 - [x] Build Test
 
 See the [open issues](https://github.com/dev0Guy/amgu/issues) for a full list of proposed features (and known issues).
