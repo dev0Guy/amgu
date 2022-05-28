@@ -26,10 +26,7 @@ config = {
     },
     "model": {
         "custom_model": "new_models",
-        "custom_model_config": {
-            "intersection_num": 1,
-            "hidden_size": 10,
-        },
+        "custom_model_config": {"intersection_num": 1, "hidden_size": 10,},
     },
     "run_from": "/Users/guyarieli/Documents/GitHub/amgu/amgu/",
     "env": "custom_env",

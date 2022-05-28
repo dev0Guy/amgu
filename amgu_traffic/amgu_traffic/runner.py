@@ -111,9 +111,7 @@ class RayRunner(RunnerWrapper):
 
             gs = gridspec.GridSpec(4, 3)
             gs.update(wspace=0.5)
-            ax1 = plt.subplot(
-                gs[:3, :3],
-            )
+            ax1 = plt.subplot(gs[:3, :3],)
             ax2 = plt.subplot(gs[3, 0])
             ax3 = plt.subplot(gs[3, 1])
             ax4 = plt.subplot(gs[3, 2])
@@ -143,4 +141,3 @@ class RayRunner(RunnerWrapper):
     #         intersection_num * obs_np.shape[3],
     #     )
     #     return np.reshape(obs_np, new_shape).T.astype(np.uint8)
-

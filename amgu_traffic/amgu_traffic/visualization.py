@@ -3,7 +3,8 @@ from functools import cmp_to_key
 from PIL import Image
 import glob
 
-__all__ = ['VisualizationCF']
+__all__ = ["VisualizationCF"]
+
 
 class VisualizationCF:
     @staticmethod
@@ -17,7 +18,6 @@ class VisualizationCF:
         )
         return np.reshape(obs_np, new_shape).T.astype(np.uint8)
 
-
     @staticmethod
     def save_gif(path, frame_size):
         def cmp_func(item1, item2):
@@ -28,6 +28,7 @@ class VisualizationCF:
             item1 = int(item1)
             item2 = int(item2)
             return item1 - item2
+
         images_path = glob.glob(f"{path}/*.png")
         file_path = f"{path}/movie.gif"
         imgs = (Image.open(f) for f in sorted(images_path, key=cmp_to_key(cmp_func)))
