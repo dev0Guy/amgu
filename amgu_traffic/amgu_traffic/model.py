@@ -90,7 +90,7 @@ class Qeueue(AlgorithmWrapper):
         self.action_impact = action_impact
 
     def __call__(self, obs: torch.Tensor):
-        obs = obs[:, 3]
+        obs = obs[:,2]
         obs = torch.count_nonzero(obs, dim=-1).float()
         output = []
         for sample in obs:
@@ -99,6 +99,7 @@ class Qeueue(AlgorithmWrapper):
                 phase_summer = np.zeros(
                     max(set(self.action_impact[i_idx].values())) + 1
                 )
+
                 for l_idx, lane_count in enumerate(intersection):
                     if l_idx not in self.action_impact[i_idx]:
                         continue
