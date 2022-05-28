@@ -1,7 +1,7 @@
-import glob
 import numpy as np
 from .environment import CFWrapper
 from amgu_abstract import RunnerWrapper
+from .visualization import *
 import os
 import shutil
 from ray.rllib.utils.framework import try_import_torch
@@ -11,8 +11,6 @@ import ray.rllib.agents.ppo as ppo
 import ray.rllib.agents.a3c as a3c
 import ray.rllib.agents.dqn as dqn
 import ray
-from functools import cmp_to_key
-from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
@@ -97,9 +95,8 @@ class RayRunner(RunnerWrapper):
         while not done:
             action_np = agent_instance.compute_single_action(obs_np)
             obs_tensor = torch.from_numpy(obs_np)[None, :].float()
-            obs_img = self._convert_to_image(obs_np)
+            obs_img = VisualizationCF.convert_to_image(obs_np)
             size = obs_img.shape if size == None else size
-            # cv2.imwrite(os.path.join(dir_path, f"{idx}.png"), obs_img)
             if action_np is np.array:
                 action_tensor = torch.reshape(action_np, (len(action_np), -1))
                 action_tensor = torch.argmax(action_tensor, dim=1)
@@ -135,37 +132,15 @@ class RayRunner(RunnerWrapper):
             plt.savefig(os.path.join(dir_path, f"{idx}.png"))
             idx += 1
         assert size is not None
-        self._save_gif(dir_path, size[:-1])
+        VisualizationCF.save_gif(dir_path, size[:-1])
 
-    def _convert_to_image(self, obs_np):
-        assert type(obs_np) is np.ndarray
-        intersection_num = obs_np.shape[1]
-        new_shape = (
-            obs_np.shape[0],
-            intersection_num * obs_np.shape[2],
-            intersection_num * obs_np.shape[3],
-        )
-        return np.reshape(obs_np, new_shape).T.astype(np.uint8)
+    # def _convert_to_image(self, obs_np):
+    #     assert type(obs_np) is np.ndarray
+    #     intersection_num = obs_np.shape[1]
+    #     new_shape = (
+    #         obs_np.shape[0],
+    #         intersection_num * obs_np.shape[2],
+    #         intersection_num * obs_np.shape[3],
+    #     )
+    #     return np.reshape(obs_np, new_shape).T.astype(np.uint8)
 
-    def _save_gif(self, path, frame_size):
-        def cmp_func(item1, item2):
-            item1 = item1.replace(f"{path}/", "")
-            item2 = item2.replace(f"{path}/", "")
-            item1 = item1.replace(".png", "")
-            item2 = item2.replace(".png", "")
-            item1 = int(item1)
-            item2 = int(item2)
-            return item1 - item2
-
-        images_path = glob.glob(f"{path}/*.png")
-        file_path = f"{path}/movie.gif"
-        imgs = (Image.open(f) for f in sorted(images_path, key=cmp_to_key(cmp_func)))
-        img = next(imgs)  # extract first image from iterator
-        img.save(
-            fp=file_path,
-            format="GIF",
-            append_images=imgs,
-            save_all=True,
-            duration=100,
-            loop=0,
-        )
