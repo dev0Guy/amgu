@@ -19,7 +19,7 @@ def LaneQeueueLength(obs, waiting_cars_dim_idx):
     waiting_cars_val = obs[waiting_cars_dim_idx]
     max_val = np.max(waiting_cars_val)
     min_val = np.min(waiting_cars_val)
-    
+
     assert (min_val == 0 or min_val == 255) and (max_val == 0 or max_val == 255)
 
     return np.count_nonzero(waiting_cars_val, axis=-1)

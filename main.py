@@ -1,8 +1,9 @@
 from amgu_traffic.environment import DiscreteCF
 from amgu_traffic.reward import AvgWaitingTime
-from amgu_traffic.model import FCN,CNN
+from amgu_traffic.model import FCN, CNN
 from amgu_traffic.preprocessor import LaneQeueueLength
 from amgu_traffic.runner import RayRunner
+
 agent_name = "DQN"
 
 
