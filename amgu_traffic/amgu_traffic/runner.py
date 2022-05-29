@@ -42,7 +42,6 @@ class RayRunner(RunnerWrapper):
         del self.config["stop"]
         del self.config["res_path"]
         del self.config["run_from"]
-        script_dir = os.path.dirname(__file__)
         org_path = self.config["env_config"]["config_path"]
         ray.init(log_to_driver=False)
         self.config["env_config"]["config_path"] = os.path.join(
