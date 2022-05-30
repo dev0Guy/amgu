@@ -94,7 +94,7 @@ class RayRunner(RunnerWrapper):
         while not done:
             action_np = agent_instance.compute_single_action(obs_np)
             obs_tensor = torch.from_numpy(obs_np)[None, :].float()
-            obs_img = VisualizationCF.convert_to_image(obs_np)
+            obs_img = VisualizationCF.convert_to_image(env.unpreprocess_state)
             size = obs_img.shape if size == None else size
             if action_np is np.array:
                 action_tensor = torch.reshape(action_np, (len(action_np), -1))

@@ -332,6 +332,7 @@ class CFWrapper:
                     #         leader_distance - distance
                     #     ) / self.summary["size"]
         state = state * 255
+        self.unpreprocess_state = state
         return self.preprocess.transform(state) if self.preprocess else state
 
     def get_results(self):
