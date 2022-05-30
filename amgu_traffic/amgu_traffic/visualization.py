@@ -2,6 +2,7 @@ import numpy as np
 from functools import cmp_to_key
 from PIL import Image
 import glob
+import math
 
 __all__ = ["VisualizationCF"]
 
@@ -10,12 +11,19 @@ class VisualizationCF:
     @staticmethod
     def convert_to_image(obs_np):
         assert type(obs_np) is np.ndarray
-        intersection_num = obs_np.shape[1]
-        new_shape = (
-            obs_np.shape[0],
-            intersection_num * obs_np.shape[2],
-            intersection_num * obs_np.shape[3],
-        )
+        if len(obs_np.shape) == 4 and obs_np.shape[0] == 3:
+            intersection_num = obs_np.shape[1]
+            new_shape = (
+                obs_np.shape[0],
+                intersection_num * obs_np.shape[2],
+                intersection_num * obs_np.shape[3],
+            )
+        elif len(obs_np.shape) == 2:
+            intersection_num = obs_np.shape[0]
+            x = np.zeros(obs_np.shape[1] // 2)
+            print(np.max(obs_np))
+            obs_np = np.concatenate((obs_np.flatten(), x), axis=0)
+            new_shape = (4 * intersection_num, 4 * intersection_num, 3)
         return np.reshape(obs_np, new_shape).T.astype(np.uint8)
 
     @staticmethod
