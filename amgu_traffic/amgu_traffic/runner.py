@@ -132,13 +132,3 @@ class RayRunner(RunnerWrapper):
             idx += 1
         assert size is not None
         VisualizationCF.save_gif(dir_path, size[:-1])
-
-    # def _convert_to_image(self, obs_np):
-    #     assert type(obs_np) is np.ndarray
-    #     intersection_num = obs_np.shape[1]
-    #     new_shape = (
-    #         obs_np.shape[0],
-    #         intersection_num * obs_np.shape[2],
-    #         intersection_num * obs_np.shape[3],
-    #     )
-    #     return np.reshape(obs_np, new_shape).T.astype(np.uint8)

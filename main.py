@@ -6,7 +6,6 @@ from amgu_traffic.runner import RayRunner
 
 agent_name = "DQN"
 
-
 config = {
     "env_config": {
         "config_path": "examples/hangzhou_1x1_bc-tyc_18041607_1h/config.json",
