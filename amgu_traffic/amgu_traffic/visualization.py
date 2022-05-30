@@ -2,7 +2,7 @@ import numpy as np
 from functools import cmp_to_key
 from PIL import Image
 import glob
-import math
+import math 
 
 __all__ = ["VisualizationCF"]
 
@@ -20,11 +20,16 @@ class VisualizationCF:
             )
         elif len(obs_np.shape) == 2:
             intersection_num = obs_np.shape[0]
-            x = np.zeros(obs_np.shape[1] // 2)
+            x = np.zeros(obs_np.shape[1]//2)
             print(np.max(obs_np))
-            obs_np = np.concatenate((obs_np.flatten(), x), axis=0)
-            new_shape = (4 * intersection_num, 4 * intersection_num, 3)
+            obs_np = np.concatenate((obs_np.flatten(),x),axis=0)
+            new_shape = (
+                4  * intersection_num,
+                4 * intersection_num,
+                3
+            ) 
         return np.reshape(obs_np, new_shape).T.astype(np.uint8)
+        
 
     @staticmethod
     def save_gif(path, frame_size):

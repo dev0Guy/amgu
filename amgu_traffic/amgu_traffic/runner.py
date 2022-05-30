@@ -20,6 +20,11 @@ torch, nn = try_import_torch()
 __all__ = ["RayRunner"]
 WINDOW_SIZE = 50
 
+def normlize(x):
+    min_val = x.min(-1)[0].min(-1)[0]
+    max_val = x.max(-1)[0].max(-1)[0]
+    return (x-min_val[:,:,None,None])/(max_val[:,:,None,None]-min_val[:,:,None,None])
+
 
 class RayRunner(RunnerWrapper):
 
@@ -68,7 +73,7 @@ class RayRunner(RunnerWrapper):
 
         self.last_checkpoint = self._analysis.get_last_checkpoint()
 
-    def eval(self, weight_path=None):
+    def eval(self, weight_path=None, attack_func=None):
         first = weight_path != None and type(weight_path) is str
         second = weight_path == None and self.last_checkpoint != None
         assert first or second
@@ -77,7 +82,6 @@ class RayRunner(RunnerWrapper):
         agent_instance = self._instance[self.agent](config=self.config)
         agent_instance.restore(weight_path)
         env = self.env_func(self.config["env"])
-
         done = False
         obs_np = env.reset()
 
@@ -90,11 +94,15 @@ class RayRunner(RunnerWrapper):
         os.mkdir(dir_path)
         idx = 0
         size = None
+        model = agent_instance.get_policy().model.network
         plt.figure(figsize=(10, 13), dpi=80)
         while not done:
+            obs_tensor = torch.from_numpy(obs_np).float()
+            if attack_func != None: 
+                obs_tensor = attack_func(model,obs_tensor,torch.Tensor([0]),env.preprocess)
+                obs_np = obs_tensor.numpy()
             action_np = agent_instance.compute_single_action(obs_np)
-            obs_tensor = torch.from_numpy(obs_np)[None, :].float()
-            obs_img = VisualizationCF.convert_to_image(env.unpreprocess_state)
+            obs_img = VisualizationCF.convert_to_image(obs_np)
             size = obs_img.shape if size == None else size
             if action_np is np.array:
                 action_tensor = torch.reshape(action_np, (len(action_np), -1))
