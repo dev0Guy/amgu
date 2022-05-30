@@ -20,10 +20,13 @@ torch, nn = try_import_torch()
 __all__ = ["RayRunner"]
 WINDOW_SIZE = 50
 
+
 def normlize(x):
     min_val = x.min(-1)[0].min(-1)[0]
     max_val = x.max(-1)[0].max(-1)[0]
-    return (x-min_val[:,:,None,None])/(max_val[:,:,None,None]-min_val[:,:,None,None])
+    return (x - min_val[:, :, None, None]) / (
+        max_val[:, :, None, None] - min_val[:, :, None, None]
+    )
 
 
 class RayRunner(RunnerWrapper):
@@ -98,8 +101,10 @@ class RayRunner(RunnerWrapper):
         plt.figure(figsize=(10, 13), dpi=80)
         while not done:
             obs_tensor = torch.from_numpy(obs_np).float()
-            if attack_func != None: 
-                obs_tensor = attack_func(model,obs_tensor,torch.Tensor([0]),env.preprocess)
+            if attack_func != None:
+                obs_tensor = attack_func(
+                    model, obs_tensor, torch.Tensor([0]), env.preprocess
+                )
                 obs_np = obs_tensor.numpy()
             action_np = agent_instance.compute_single_action(obs_np)
             obs_img = VisualizationCF.convert_to_image(obs_np)
