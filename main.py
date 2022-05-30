@@ -1,7 +1,7 @@
 from amgu_traffic.environment import DiscreteCF
 from amgu_traffic.reward import AvgWaitingTime
 from amgu_traffic.model import FCN, CNN
-from amgu_traffic.preprocessor import LaneQeueueLength
+from amgu_traffic.preprocessor import LaneQeueueLength, Vanila
 from amgu_traffic.runner import RayRunner
 
 agent_name = "DQN"
@@ -38,8 +38,8 @@ config = {
     "run_from": "/Users/guyarieli/Documents/GitHub/amgu/amgu/",
     "env": "custom_env",
 }
-preprocess_dict = {"func": LaneQeueueLength, "argument_list": [2]}
+preprocess_dict = {"func": Vanila, "argument_list": []}
 env_func = lambda _: DiscreteCF(config["env_config"], AvgWaitingTime, preprocess_dict)
-runner = RayRunner(config, FCN, env_func, agent_name)
+runner = RayRunner(config, CNN, env_func, agent_name)
 runner.train()
 runner.eval()
