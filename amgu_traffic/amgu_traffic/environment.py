@@ -257,7 +257,7 @@ class CFWrapper:
         finish_run = self.count_zero_frames >= 15
         self.is_done = more_then_max or finish_run
         if self.is_done:
-            self.reward += 100 if more_then_max else -100
+            self.reward += 10 ** 4 if more_then_max else -(10 ** 4)
         return self.observation, self.reward, self.is_done, {}
 
     def _reset(self):
