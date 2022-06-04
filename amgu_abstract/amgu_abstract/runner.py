@@ -20,7 +20,7 @@ class RunnerWrapper:
             agent (*): Instnace Of Agent To Run On.
         """
         class_options = TorchWrapper
-        assert issubclass(model, class_options)
+        # assert issubclass(model, class_options)
         self.agent = agent
         self.config = config
         self.model = model
