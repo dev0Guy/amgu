@@ -125,5 +125,5 @@ class Random(AlgorithmWrapper):
         self.action_impact = action_impact
 
     def __call__(self, obs: torch.Tensor):
-        intersection_num = obs.size()[2]
+        intersection_num = obs.size()[1]
         return torch.round(torch.rand(intersection_num) * 8).int()
