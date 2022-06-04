@@ -23,8 +23,8 @@ class DeltaQeueueLength(RewardWrapper):
 
     def get(self, observation):
         waiting_in_lanes = list(self.env.eng.get_lane_waiting_vehicle_count().values())
-        running_in_lanes = list(self.env.eng.get_lane_waiting_vehicle_count().values())
-        return sum(waiting_in_lanes) - sum(running_in_lanes)
+        running_in_lanes = self.env.eng.get_vehicles(include_waiting=False)
+        return sum(waiting_in_lanes) - len(running_in_lanes)
 
 
 class AvgWaitingTime(RewardWrapper):
