@@ -1006,10 +1006,6 @@
         ],
         "lightphases": [
           {
-            "time": 5,
-            "availableRoadLinks": []
-          },
-          {
             "time": 30,
             "availableRoadLinks": [
               0,

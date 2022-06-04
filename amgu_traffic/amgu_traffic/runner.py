@@ -13,7 +13,7 @@ import ray.rllib.agents.dqn as dqn
 import ray
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-
+import json
 
 torch, nn = try_import_torch()
 
@@ -76,7 +76,7 @@ class RayRunner(RunnerWrapper):
 
         self.last_checkpoint = self._analysis.get_last_checkpoint()
 
-    def eval(self, weight_path=None, attack_func=None):
+    def eval(self, weight_path=None, attack_func=None, attack_name=None):
         first = weight_path != None and type(weight_path) is str
         second = weight_path == None and self.last_checkpoint != None
         assert first or second
@@ -89,7 +89,9 @@ class RayRunner(RunnerWrapper):
         obs_np = env.reset()
 
         information_dict = {"rewards": [], "ATT": [], "QL": []}
-        dir_path = os.path.join(self.res_path, "Images")
+        dir_path = os.path.join(self.res_path, "Images_vanila")
+        if attack_name != None:
+            dir_path = os.path.join(self.res_path, f"Images_{attack_name}")
 
         # remvove if file exist
         if os.path.exists(dir_path):
@@ -98,12 +100,13 @@ class RayRunner(RunnerWrapper):
         idx = 0
         size = None
         model = agent_instance.get_policy().model.network
+
         plt.figure(figsize=(10, 13), dpi=80)
         while not done:
             obs_tensor = torch.from_numpy(obs_np).float()
             if attack_func != None:
                 obs_tensor = attack_func(
-                    model, obs_tensor, torch.Tensor([0]), env.preprocess
+                    model, obs_tensor, torch.Tensor([[0]]), env.preprocess
                 )
                 obs_np = obs_tensor.numpy()
             action_np = agent_instance.compute_single_action(obs_np)
@@ -145,3 +148,5 @@ class RayRunner(RunnerWrapper):
             idx += 1
         assert size is not None
         VisualizationCF.save_gif(dir_path, size[:-1])
+        with open(f'{dir_path}/information.json', 'w') as file:
+            json.dump(information_dict, file)
