@@ -2,8 +2,6 @@
   <img src="assets/amgu.png" height="150" />
 </p>
 
-[![CI/CD](https://github.com/dev0Guy/amgu/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/dev0Guy/amgu/actions/workflows/python-package-conda.yml)
-[![format](https://github.com/dev0Guy/amgu/actions/workflows/black.yml/badge.svg)](https://github.com/dev0Guy/amgu/actions/workflows/black.yml)
 <!-- ABOUT THE PROJECT -->
 ## About Amgu
 
