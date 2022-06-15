@@ -1,5 +1,5 @@
 from stable_baselines3.common.env_checker import check_env
-from env import CityFlow1D, CityFlow2D
+from Amgu.env import CityFlow1D, CityFlow2D
 import unittest
 import os.path
 
