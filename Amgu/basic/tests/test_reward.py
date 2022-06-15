@@ -1,5 +1,5 @@
 import unittest
-from Amgu.reward import (
+from reward import (
     queue_length,
     queue_length_squared,
     queue_length_pln,

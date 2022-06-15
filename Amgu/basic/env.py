@@ -1,6 +1,6 @@
 import gym
 import numpy as np
-from .utils import extract_information
+from utils import extract_information
 
 
 class CityFlow1D(gym.Env):
