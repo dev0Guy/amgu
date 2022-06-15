@@ -1,0 +1,11 @@
+[build-system]
+requires = [
+    "setuptools>=54",
+    "gym",
+    "numpy",
+    "stable-baselines3==1.5.0",
+    "tensorboard",
+    "matplotlib",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
