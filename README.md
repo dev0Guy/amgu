@@ -43,9 +43,6 @@ Bellow example show the step to install and run example of Amgu.
    ```python
       from Amgu.basic.env import CityFlow1D
       from Amgu.basic.reward import *
-      from Amgu.basic.models import Random
-      from Amgu.basic.evaluate import evaluation_generator
-      from Amgu.visualization.graph import line_graph
       from Amgu.runnner import stable_baseline_train
       from stable_baselines3 import DQN
 
@@ -61,13 +58,13 @@ Bellow example show the step to install and run example of Amgu.
           "policy_param": {
               "policy": "MlpPolicy",
               "tensorboard_log": f"{exp_name}/tesnorboard",
-              # 'policy_kwargs': dict(activation_fn=th.nn.ReLU, net_arch=[146,50,8]),
+              'policy_kwargs': dict(activation_fn=th.nn.ReLU, net_arch=[146,50,8]),
               "gamma": 0.95,
               "learning_rate": 0.005,
-              # "exploration_initial_eps": 1,
-              # 'exploration_fraction': 0.9,
-              # "exploration_final_eps": 0.15,
-              # 'target_update_interval': 1_000,
+              "exploration_initial_eps": 1,
+              'exploration_fraction': 0.9,
+              "exploration_final_eps": 0.15,
+              'target_update_interval': 1_000,
           },
           "evaluation_interval": 400,
           "evaluation_duration": 1,
