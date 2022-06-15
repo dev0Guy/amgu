@@ -3,8 +3,8 @@ from env import CityFlow1D, CityFlow2D
 import unittest
 import os.path
 
-parent_path = 'example/1x1'
-replay_path = f'{parent_path}/res/replay.txt'
+parent_path = "example/1x1"
+replay_path = f"{parent_path}/res/replay.txt"
 roadnet_path = f"{parent_path}/res/roadnet.json"
 DEFUALT_DICT = {
     "env_config": {
@@ -14,6 +14,7 @@ DEFUALT_DICT = {
     },
     "env_param": {"reward_func": lambda x, y: 5},
 }
+
 
 class CityFlow1DTestCase(unittest.TestCase):
     def setUp(self):
@@ -57,7 +58,6 @@ class CityFlow2DTestCase(unittest.TestCase):
             self.fail("Outouts file of env dont exist")
         os.remove(replay_path)
         os.remove(roadnet_path)
-
 
     def test_district(self):
         check_env(self.district, warn=False)
