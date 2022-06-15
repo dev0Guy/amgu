@@ -3,8 +3,7 @@
 </p>
 
 [![format](https://github.com/dev0Guy/amgu/actions/workflows/black.yml/badge.svg?branch=production)](https://github.com/dev0Guy/amgu/actions/workflows/black.yml)
-[![Python Package using Conda](https://github.com/dev0Guy/amgu/actions/workflows/python-package-conda.yml/badge.svg?branch=production)](https://github.com/dev0Guy/amgu/actions/workflows/python-package-conda.yml)
-
+[![Pypi](https://github.com/dev0Guy/amgu/actions/workflows/Pypi.yml/badge.svg?branch=production)](https://github.com/dev0Guy/amgu/actions/workflows/Pypi.yml)
 <!-- ABOUT THE PROJECT -->
 ## About Amgu
 
