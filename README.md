@@ -2,6 +2,8 @@
   <img src="assets/amgu.png" height="150" />
 </p>
 
+[![format](https://github.com/dev0Guy/amgu/actions/workflows/black.yml/badge.svg?branch=production)](https://github.com/dev0Guy/amgu/actions/workflows/black.yml)
+
 <!-- ABOUT THE PROJECT -->
 ## About Amgu
 
