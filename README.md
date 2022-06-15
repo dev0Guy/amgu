@@ -73,8 +73,7 @@ stable_baselines_config = {
     "evaluation_duration": 1,
     "stop": {"training_iteration": 2_000},
 }
-stable_baseline_train(DQN, CityFlow1D, stable_baselines_config)
-   ```
+stable_baseline_train(DQN, CityFlow1D, stable_baselines_config)```
 
 <!-- ROADMAP -->
 ## Roadmap
