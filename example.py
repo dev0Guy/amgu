@@ -2,7 +2,7 @@ from Amgu.basic.env import CityFlow1D
 from Amgu.basic.reward import *
 from Amgu.basic.models import Random
 from Amgu.basic.evaluate import evaluation_generator
-from Amgu.visualization.graph import line_graph
+from Amgu.visualization.graph import line_graph, offline_attack_analysis
 from Amgu.runnner import stable_baseline_train
 from stable_baselines3 import DQN
 
@@ -30,17 +30,17 @@ stable_baselines_config = {
     "evaluation_duration": 1,
     "stop": {"training_iteration": 2_000},
 }
-stable_baseline_train(DQN, CityFlow1D, stable_baselines_config)
-# env = CityFlow1D(
-#     stable_baselines_config["env_config"], **stable_baselines_config["env_param"]
-# )
+# stable_baseline_train(DQN, CityFlow1D, stable_baselines_config)
+env = CityFlow1D(
+    stable_baselines_config["env_config"], **stable_baselines_config["env_param"]
+)
 
-# models = [
-#     Random(env.action_space),
-#     Random(env.action_space),
-#     Random(env.action_space),
-#     Random(env.action_space),
-# ]
+models = [
+    Random(env.action_space),
+    # Random(env.action_space),
+    # Random(env.action_space),
+    # Random(env.action_space),
+]
 
-# gen = evaluation_generator(CityFlow1D, stable_baselines_config, models)
-# line_graph(gen, 400, len(models), "here.png")
+gen = evaluation_generator(CityFlow1D, stable_baselines_config, models)
+offline_attack_analysis(gen, 400, len(models), "here.png")

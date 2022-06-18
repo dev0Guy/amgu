@@ -1,6 +1,7 @@
 import gym
 import numpy as np
-from utils import extract_information
+from functools import reduce
+from .utils import extract_information
 
 
 class CityFlow1D(gym.Env):
@@ -22,7 +23,7 @@ class CityFlow1D(gym.Env):
     }
     COOLDOWN_TIME = 6
     COOLDOWN_ACTION = 0
-    MAX_VAL = 100
+    MAX_VAL = 255
     MAX_REPEAT = 10
 
     #########################
@@ -70,6 +71,17 @@ class CityFlow1D(gym.Env):
             np.zeros(self.shape) + CityFlow1D.MAX_VAL,
             dtype=np.float64,
         )
+        lanes_info_size = reduce((lambda x,y: x * y),self.org_state_shape)
+        max_count =  CityFlow1D.META["size"] / (
+            CityFlow1D.META["length"] + CityFlow1D.META["minGap"]
+        )
+        self.state_division = {
+            "Multiplyer": CityFlow1D.MAX_VAL,
+            "prev_action":  (1 if self.district else len(self.prev_lights), 8),
+            "prev_action_duration": (1,self.max_step_c),
+            "lane_density": (lanes_info_size,max_count),
+            "lane_queue": (lanes_info_size,max_count),
+        }
         self.prev_lights = np.zeros(len(self.intersectionNames))
         self.same_action_c = 0
         self.observation = self.reset()
